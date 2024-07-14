@@ -1,8 +1,10 @@
 mod buffer;
+mod vector_math;
 
-use std::fs::File;
-use png::Encoder;
 use buffer::{Buffer, Dimensions, Point, Rgb};
+use png::Encoder;
+use std::fs::File;
+use vector_math::Vec3;
 
 const WIDTH: u32 = 1024;
 const HEIGHT: u32 = 768;
@@ -34,4 +36,18 @@ fn draw(buffer: &mut Buffer) {
             );
         }
     }
+
+    //testing ground
+    println!(
+        "dot product is {}",
+        Vec3::new(1.0, 1.0, 2.0).dot_product(&Vec3::new(2.0, 2.0, 3.0))
+    );
+
+    println!(
+        "vector and scalar product {:?}",
+        Vec3::new(1.0, 2.0, -3.0).multiply(3.0)
+    );
+
+    println!("magnitude is {}", Vec3::new(2.0, 0.0, 0.0).magnitude());
+    println!("normalized {:?}", Vec3::new(2.0, 2.0, 0.0).normalize());
 }
