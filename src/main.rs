@@ -3,15 +3,15 @@ mod vector_math;
 
 use buffer::{Buffer, Dimensions, Point, Rgb};
 use png::Encoder;
-use std::fs::File;
+use std::{fs::File, io};
 use vector_math::Vec3;
 
 const WIDTH: u32 = 1024;
 const HEIGHT: u32 = 768;
 const CHANNELS: u8 = 3;
 
-fn main() {
-    let output = File::create("test.png").expect("error when creating the output file");
+fn main() -> io::Result<()> {
+    let output = File::create("test.png")?;
     let mut encoder = Encoder::new(output, WIDTH, HEIGHT);
 
     encoder.set_color(png::ColorType::Rgb);
@@ -21,10 +21,9 @@ fn main() {
     buffer.clear();
     draw(&mut buffer);
 
-    let mut writer = encoder.write_header().unwrap();
-    writer
-        .write_image_data(buffer.get_data_ref())
-        .expect("Something went wrong lol");
+    let mut writer = encoder.write_header()?;
+    writer.write_image_data(buffer.get_data_ref())?;
+    Ok(())
 }
 
 fn draw(buffer: &mut Buffer) {
