@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Vec3 {
     values: [f32; 3],
 }
@@ -6,6 +6,14 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { values: [x, y, z] }
+    }
+
+    pub fn add(self, v2: &Vec3) -> Vec3 {
+        let mut new_values = [0.0; 3];
+        for (idx, (v1_i, v2_i)) in self.values.iter().zip(v2.values).enumerate() {
+            new_values[idx] = v1_i + v2_i;
+        }
+        Vec3 { values: new_values }
     }
 
     pub fn dot_product(&self, v2: &Vec3) -> f32 {
