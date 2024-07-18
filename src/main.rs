@@ -33,8 +33,8 @@ fn background(buffer: &mut Buffer) {
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
             buffer.set(
-                Point(x, y),
-                Rgb((x * 256 / WIDTH) as u8, 0, (y * 256 / HEIGHT) as u8),
+                &Point(x, y),
+                &Rgb((x * 256 / WIDTH) as u8, 0, (y * 256 / HEIGHT) as u8),
             );
         }
     }
@@ -46,30 +46,44 @@ fn draw(buffer: &mut Buffer) {
     let (in_world_top_left, in_world_pixel_x_offset, in_world_pixel_y_offset) =
         set_up_3d_world(camera_position, looking_direction);
 
+    let sphere = Sphere {
+        origin: Vec3::new(3.2, 1.8, -10.0),
+        radius: 2.0,
+        diffuse_color: Rgb(50, 50, 50),
+    };
+
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
             // mapping between the pixel on the png and the vector looking at its representation
             // on the virtual screen from the pov of the camera
-            let camera_to_pixel_direction = (in_world_pixel_x_offset * x as f32
+            let camera_to_pixel_direction = in_world_pixel_x_offset * x as f32
                 + in_world_pixel_y_offset * y as f32
                 + in_world_top_left
-                - camera_position)
-                .normalize();
+                - camera_position;
 
-            let angle = f32::acos(
-                (looking_direction * camera_to_pixel_direction) / looking_direction.magnitude()
-                    * camera_to_pixel_direction.magnitude(),
-            )
-            .to_degrees();
-
-            if angle < 10.0 {
-                // drawing the circle that is the intersection of all vectors comming from the
-                // camera that form angle less than 10 degrees with the camera view direction and
-                // the virtual screen plane
-                buffer.set(Point(x, y), Rgb(100, 100, 100));
+            if ray_intersects(&camera_position, &camera_to_pixel_direction, &sphere) {
+                buffer.set(&Point(x, y), &sphere.diffuse_color);
             }
         }
     }
+}
+
+struct Sphere {
+    origin: Vec3,
+    radius: f32,
+    diffuse_color: Rgb,
+}
+
+fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> bool {
+    let ray_origin_to_sphere = sphere.origin - *ray_origin;
+    let dot_product = ray_origin_to_sphere * ray_direction.normalize();
+    if dot_product > 0.0 {
+        let center_to_ray = (ray_origin_to_sphere.magnitude().powi(2) - dot_product.powi(2)).sqrt();
+        if center_to_ray < sphere.radius {
+            return true;
+        }
+    }
+    false
 }
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {

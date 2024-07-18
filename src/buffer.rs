@@ -28,7 +28,7 @@ impl Buffer {
         }
     }
 
-    pub fn set(&mut self, point: Point, rgb: Rgb) {
+    pub fn set(&mut self, point: &Point, rgb: &Rgb) {
         let first_byte = ((point.1 * self.width + point.0) * 3) as usize;
         self.data[first_byte] = rgb.0;
         self.data[first_byte + 1] = rgb.1;
