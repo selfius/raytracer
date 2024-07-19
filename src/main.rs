@@ -61,8 +61,12 @@ fn draw(buffer: &mut Buffer) {
                 + in_world_top_left
                 - camera_position;
 
-            if ray_intersects(&camera_position, &camera_to_pixel_direction, &sphere) {
-                buffer.set(&Point(x, y), &sphere.diffuse_color);
+            let distance = ray_intersects(&camera_position, &camera_to_pixel_direction, &sphere);
+            if distance.is_some() {
+                // distance should be in range between 8.0 to 10.0 for our particular sphere
+                // lets map that to the shades of grey (the closer the brigther)
+                let brightness = 255 - (255.0 * (distance.unwrap() - 8.0) / 2.0) as u8;
+                buffer.set(&Point(x, y), &Rgb(brightness, brightness, brightness));
             }
         }
     }
@@ -74,16 +78,23 @@ struct Sphere {
     diffuse_color: Rgb,
 }
 
-fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> bool {
+fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> Option<f32> {
+    let normalized_ray_direction = ray_direction.normalize();
     let ray_origin_to_sphere = sphere.origin - *ray_origin;
-    let dot_product = ray_origin_to_sphere * ray_direction.normalize();
-    if dot_product > 0.0 {
-        let center_to_ray = (ray_origin_to_sphere.magnitude().powi(2) - dot_product.powi(2)).sqrt();
+    if ray_origin_to_sphere * normalized_ray_direction > 0.0 {
+        let center_to_ray = (ray_origin_to_sphere.magnitude().powi(2)
+            - (ray_origin_to_sphere * normalized_ray_direction).powi(2))
+        .sqrt();
         if center_to_ray < sphere.radius {
-            return true;
+            let distance = (normalized_ray_direction
+                * (ray_origin_to_sphere * normalized_ray_direction)
+                - ray_direction.normalize()
+                    * (sphere.radius.powi(2) - center_to_ray.powi(2)).sqrt())
+            .magnitude();
+            return Option::Some(distance);
         }
     }
-    false
+    Option::None
 }
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
