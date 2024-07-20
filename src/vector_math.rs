@@ -1,6 +1,6 @@
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec3 {
     values: [f32; 3],
 }
@@ -60,5 +60,52 @@ impl Vec3 {
     pub fn normalize(self) -> Vec3 {
         let magnitude = self.magnitude();
         self * (1.0 / magnitude)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Vec3;
+
+    #[test]
+    fn addition() {
+        let result = Vec3::new(1.0, 2.0, 3.0) + Vec3::new(4.0, 5.0, 6.0);
+        let expected = Vec3::new(5.0, 7.0, 9.0);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn substraction() {
+        let result = Vec3::new(1.0, 2.0, 3.0) - Vec3::new(4.0, 5.0, 6.0);
+        let expected = Vec3::new(-3.0, -3.0, -3.0);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn multiplication_by_scalar() {
+        let result = Vec3::new(1.0, 2.0, 3.0) * 2.0;
+        let expected = Vec3::new(2.0, 4.0, 6.0);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn dot_product() {
+        let result = Vec3::new(1.0, 2.0, 3.0) * Vec3::new(4.0, 5.0, 6.0);
+        let expected = 32.0;
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn magnitude() {
+        let result = Vec3::new(-10.0, 0.0, 0.0).magnitude();
+        let expected = 10.0;
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn normalization() {
+        let result = Vec3::new(-10.0, 0.0, 0.0).normalize();
+        let expected = Vec3::new(-1.0, 0.0, 0.0);
+        assert_eq!(expected, result);
     }
 }
