@@ -46,11 +46,28 @@ fn draw(buffer: &mut Buffer) {
     let (in_world_top_left, in_world_pixel_x_offset, in_world_pixel_y_offset) =
         set_up_3d_world(camera_position, looking_direction);
 
-    let sphere = Sphere {
-        origin: Vec3::new(3.2, 1.8, -10.0),
-        radius: 2.0,
-        diffuse_color: Rgb(50, 50, 50),
-    };
+    let spheres = vec![
+        Sphere {
+            origin: Vec3::new(3.2, 1.8, -10.0),
+            radius: 2.0,
+            diffuse_color: Rgb(250, 50, 50),
+        },
+        Sphere {
+            origin: Vec3::new(3.2, 1.8, -10.0),
+            radius: 1.0, // fully inside the previous sphere
+            diffuse_color: Rgb(0, 0, 0),
+        },
+        Sphere {
+            origin: Vec3::new(2.2, 0.8, -8.0),
+            radius: 1.0, // slighly close the camera then the first shpere
+            diffuse_color: Rgb(50, 250, 50),
+        },
+        Sphere {
+            origin: Vec3::new(-1.0, 0.2, -3.0),
+            radius: 1.0, // slighly close the camera then the first shpere
+            diffuse_color: Rgb(50, 50, 250),
+        },
+    ];
 
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
@@ -61,21 +78,83 @@ fn draw(buffer: &mut Buffer) {
                 + in_world_top_left
                 - camera_position;
 
-            let distance = ray_intersects(&camera_position, &camera_to_pixel_direction, &sphere);
-            if distance.is_some() {
-                // distance should be in range between 8.0 to 10.0 for our particular sphere
-                // lets map that to the shades of grey (the closer the brigther)
-                let brightness = 255 - (255.0 * (distance.unwrap() - 8.0) / 2.0) as u8;
-                buffer.set(&Point(x, y), &Rgb(brightness, brightness, brightness));
+            match scene_intersect(&camera_position, &camera_to_pixel_direction, &spheres) {
+                Some((sphere, distance)) => {
+                    let distance_to_closest_point_on_sphere =
+                        (sphere.origin - camera_position).magnitude() - sphere.radius;
+
+                    let brightness =
+                        1.0 - (distance - distance_to_closest_point_on_sphere) / (sphere.radius * 1.4);
+                    // let brightness = 0.5;
+                    buffer.set(&Point(x, y), &(sphere.diffuse_color.clone() * brightness));
+                }
+                _ => (),
             }
         }
     }
 }
 
+#[derive(Debug)]
 struct Sphere {
     origin: Vec3,
     radius: f32,
     diffuse_color: Rgb,
+}
+
+fn scene_intersect<'a>(
+    ray_origin: &Vec3,
+    ray_direction: &Vec3,
+    spheres: &'a Vec<Sphere>,
+) -> Option<(&'a Sphere, f32)> {
+    let mut closest = f32::MAX;
+    let mut closest_sphere: Option<(&Sphere, f32)> = None;
+    for sphere in spheres {
+        closest_sphere = match ray_intersects(&ray_origin, &ray_direction, &sphere) {
+            Some(distance) => {
+                if distance < closest && distance > 0.0 {
+                    closest = distance;
+                    Some((sphere, distance))
+                } else {
+                    closest_sphere
+                }
+            }
+            None => closest_sphere,
+        }
+    }
+    closest_sphere
+}
+#[cfg(test)]
+mod scene_intersect_test {
+    use super::*;
+
+    #[test]
+    fn scene_intersect_picks_closest() {
+        let spheres = vec![
+            Sphere {
+                origin: Vec3::new(3.0, 0.0, 0.0),
+                radius: 1.0,
+                diffuse_color: Rgb(255, 0, 0),
+            },
+            Sphere {
+                origin: Vec3::new(4.0, 0.0, 0.0),
+                radius: 1.5,
+                diffuse_color: Rgb(0, 0, 0),
+            },
+            Sphere {
+                origin: Vec3::new(-10.0, 0.0, 0.0),
+                radius: 1.5,
+                diffuse_color: Rgb(0, 0, 255),
+            },
+        ];
+
+        let intersection = scene_intersect(
+            &Vec3::new(0.0, 0.0, 0.0),
+            &Vec3::new(1.0, 0.0, 0.0),
+            &spheres,
+        );
+
+        assert_eq!(intersection.unwrap().0.diffuse_color, Rgb(255, 0, 0));
+    }
 }
 
 fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> Option<f32> {
