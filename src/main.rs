@@ -69,6 +69,17 @@ fn draw(buffer: &mut Buffer) {
         },
     ];
 
+    let lights = vec![
+        Light {
+            origin: Vec3::new(-4.0, 400.0, 700.0),
+            intensity: 0.4,
+        },
+        Light {
+            origin: Vec3::new(4.0, 0.5, -7.0),
+            intensity: 0.8,
+        },
+    ];
+
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
             // mapping between the pixel on the png and the vector looking at its representation
@@ -80,13 +91,22 @@ fn draw(buffer: &mut Buffer) {
 
             match scene_intersect(&camera_position, &camera_to_pixel_direction, &spheres) {
                 Some((sphere, distance)) => {
-                    let distance_to_closest_point_on_sphere =
-                        (sphere.origin - camera_position).magnitude() - sphere.radius;
+                    let mut diffuse_intensity: f32 = 0.0;
 
-                    let brightness =
-                        1.0 - (distance - distance_to_closest_point_on_sphere) / (sphere.radius * 1.4);
-                    // let brightness = 0.5;
-                    buffer.set(&Point(x, y), &(sphere.diffuse_color.clone() * brightness));
+                    let point_on_sphere =
+                        camera_position + (camera_to_pixel_direction.normalize() * distance);
+                    let normal = (point_on_sphere - sphere.origin).normalize();
+
+                    for light in &lights {
+                        let light_direction = (light.origin - point_on_sphere).normalize();
+
+                        diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
+                    }
+
+                    buffer.set(
+                        &Point(x, y),
+                        &(sphere.diffuse_color.clone() * diffuse_intensity.min(1.0)),
+                    );
                 }
                 _ => (),
             }
@@ -94,11 +114,16 @@ fn draw(buffer: &mut Buffer) {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Sphere {
     origin: Vec3,
     radius: f32,
     diffuse_color: Rgb,
+}
+
+struct Light {
+    origin: Vec3,
+    intensity: f32,
 }
 
 fn scene_intersect<'a>(
@@ -160,6 +185,9 @@ mod scene_intersect_test {
 fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> Option<f32> {
     let normalized_ray_direction = ray_direction.normalize();
     let ray_origin_to_sphere = sphere.origin - *ray_origin;
+    if ray_origin_to_sphere.magnitude() < sphere.radius {
+        return None;
+    }
     if ray_origin_to_sphere * normalized_ray_direction > 0.0 {
         let center_to_ray = (ray_origin_to_sphere.magnitude().powi(2)
             - (ray_origin_to_sphere * normalized_ray_direction).powi(2))
@@ -174,6 +202,62 @@ fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> O
         }
     }
     Option::None
+}
+
+#[cfg(test)]
+mod ray_intersects_test {
+    use super::*;
+
+    #[test]
+    fn ray_intersects_test() {
+        let sphere = Sphere {
+            origin: Vec3::new(3.0, 0.0, 0.0),
+            radius: 2.0,
+            diffuse_color: Rgb(255, 0, 0),
+        };
+
+        let distance = ray_intersects(
+            &Vec3::new(0.0, 0.0, 0.0),
+            &Vec3::new(1.0, 0.0, 0.0),
+            &sphere,
+        );
+
+        assert_eq!(distance, Some(1.0));
+    }
+
+    #[test]
+    fn ray_intersects_with_sphere_behind_camera() {
+        let sphere = Sphere {
+            origin: Vec3::new(-3.0, 0.0, 0.0),
+            radius: 2.0,
+            diffuse_color: Rgb(255, 0, 0),
+        };
+
+        let distance = ray_intersects(
+            &Vec3::new(0.0, 0.0, 0.0),
+            &Vec3::new(1.0, 0.0, 0.0),
+            &sphere,
+        );
+
+        assert_eq!(distance, None);
+    }
+
+    #[test]
+    fn ray_intersects_with_camera_inside_sphere() {
+        let sphere = Sphere {
+            origin: Vec3::new(1.0, 1.0, 0.0),
+            radius: 2.0,
+            diffuse_color: Rgb(255, 0, 0),
+        };
+
+        let distance = ray_intersects(
+            &Vec3::new(0.0, 0.0, 0.0),
+            &Vec3::new(1.0, 0.0, 0.0),
+            &sphere,
+        );
+
+        assert_eq!(distance, None);
+    }
 }
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
