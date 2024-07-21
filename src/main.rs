@@ -53,12 +53,7 @@ fn draw(buffer: &mut Buffer) {
             diffuse_color: Rgb(250, 50, 50),
         },
         Sphere {
-            origin: Vec3::new(3.2, 1.8, -10.0),
-            radius: 1.0, // fully inside the previous sphere
-            diffuse_color: Rgb(0, 0, 0),
-        },
-        Sphere {
-            origin: Vec3::new(2.2, 0.8, -8.0),
+            origin: Vec3::new(4.0, 0.8, -7.0),
             radius: 1.0, // slighly close the camera then the first shpere
             diffuse_color: Rgb(50, 250, 50),
         },
@@ -67,15 +62,20 @@ fn draw(buffer: &mut Buffer) {
             radius: 1.0, // slighly close the camera then the first shpere
             diffuse_color: Rgb(50, 50, 250),
         },
+        Sphere {
+            origin: Vec3::new(-2.2, 4.5, -16.0),
+            radius: 4.0, // slighly close the camera then the first shpere
+            diffuse_color: Rgb(200, 150, 70),
+        },
     ];
 
     let lights = vec![
         Light {
-            origin: Vec3::new(-4.0, 400.0, 700.0),
+            origin: Vec3::new(-4.0, 40.0, 70.0),
             intensity: 0.4,
         },
         Light {
-            origin: Vec3::new(4.0, 0.5, -7.0),
+            origin: Vec3::new(5.0, 0.5, -4.0),
             intensity: 0.8,
         },
     ];
@@ -99,6 +99,14 @@ fn draw(buffer: &mut Buffer) {
 
                     for light in &lights {
                         let light_direction = (light.origin - point_on_sphere).normalize();
+                        let obstructing_sphere = scene_intersect(
+                            &light.origin,
+                            &(point_on_sphere - light.origin),
+                            &spheres,
+                        );
+                        if obstructing_sphere.is_some() && obstructing_sphere.unwrap().0 != sphere {
+                            continue;
+                        }
 
                         diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
                     }
