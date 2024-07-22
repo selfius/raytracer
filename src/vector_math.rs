@@ -61,6 +61,12 @@ impl Vec3 {
         let magnitude = self.magnitude();
         self * (1.0 / magnitude)
     }
+
+    pub fn reflection(self, normal: &Vec3) -> Vec3 {
+        let normal_copy = normal.clone().normalize();
+        let normalized_self = self.normalize();
+        normal_copy * (2.0 * (normalized_self * normal_copy)) - normalized_self
+    }
 }
 
 #[cfg(test)]
@@ -107,5 +113,11 @@ mod test {
         let result = Vec3::new(-10.0, 0.0, 0.0).normalize();
         let expected = Vec3::new(-1.0, 0.0, 0.0);
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn reflection() {
+        let reflected_vector = Vec3::new(1.0, 1.0, 0.0).reflection(&Vec3::new(0.0, 1.0, 0.0));
+        assert_eq!(reflected_vector, Vec3::new(-1.0, 1.0, 0.0).normalize());
     }
 }

@@ -1,4 +1,4 @@
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 pub struct Point(pub u32, pub u32);
 
 pub struct Dimensions(pub u32, pub u32);
@@ -9,30 +9,35 @@ pub struct Buffer {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct Rgb(pub u8, pub u8, pub u8);
+pub struct Rgb {
+    values: [u8; 3],
+}
+
+#[allow(non_snake_case)]
+//todo maybe generalize Vec3 and make this its alias
+pub fn Rgb(r: u8, g: u8, b: u8) -> Rgb {
+    Rgb { values: [r, g, b] }
+}
 
 impl Mul<f32> for Rgb {
     type Output = Self;
-    fn mul(self, rhs: f32) -> Self::Output {
-        let new_r = self.0 as f32 * rhs;
-        let new_g = self.1 as f32 * rhs;
-        let new_b = self.2 as f32 * rhs;
-        assert!(
-            new_r <= 256.0,
-            "expected value in 0..256 range got {}",
-            new_r
-        );
-        assert!(
-            new_g <= 256.0,
-            "expected value in 0..256 range got {}",
-            new_g
-        );
-        assert!(
-            new_b <= 256.0,
-            "expected value in 0..256 range got {}",
-            new_b
-        );
-        Rgb((new_r) as u8, (new_g) as u8, (new_b) as u8)
+    fn mul(mut self, rhs: f32) -> Self::Output {
+        for i in &mut self.values {
+            *i = (*i as f32 * rhs) as u8;
+        }
+        self
+    }
+}
+
+impl Add for Rgb {
+    type Output = Self;
+    fn add(self, v2: Self) -> Self {
+        let mut new_values = [0_u8; 3];
+        for (idx, (v1_i, v2_i)) in self.values.iter().zip(v2.values).enumerate() {
+            let value_with_overflow = *v1_i as u16 + v2_i as u16;
+            new_values[idx] = value_with_overflow.min(255) as u8;
+        }
+        Self { values: new_values }
     }
 }
 
@@ -46,9 +51,13 @@ mod rgb_test {
     }
 
     #[test]
-    #[should_panic]
     fn rgb_multiplication_out_of_bound() {
-        assert_eq!(Rgb(100, 10, 200) * 2.0, Rgb(80, 8, 160));
+        assert_eq!(Rgb(100, 10, 200) * 2.0, Rgb(200, 20, 255));
+    }
+
+    #[test]
+    fn rgb_addition() {
+        assert_eq!(Rgb(100, 10, 200) + Rgb(100, 10, 200), Rgb(200, 20, 255));
     }
 }
 
@@ -73,9 +82,9 @@ impl Buffer {
 
     pub fn set(&mut self, point: &Point, rgb: &Rgb) {
         let first_byte = ((point.1 * self.width + point.0) * 3) as usize;
-        self.data[first_byte] = rgb.0;
-        self.data[first_byte + 1] = rgb.1;
-        self.data[first_byte + 2] = rgb.2;
+        self.data[first_byte] = rgb.values[0];
+        self.data[first_byte + 1] = rgb.values[1];
+        self.data[first_byte + 2] = rgb.values[2];
     }
 
     pub fn get_data_ref(&self) -> &[u8] {
