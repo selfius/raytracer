@@ -35,7 +35,7 @@ fn background(buffer: &mut Buffer) {
         for y in 0..HEIGHT {
             buffer.set(
                 &Point(x, y),
-                &Rgb((x * 256 / WIDTH) as u8, 0, (y * 256 / HEIGHT) as u8),
+                &Rgb::new((x * 256 / WIDTH) as u8, 0, (y * 256 / HEIGHT) as u8),
             );
         }
     }
@@ -51,38 +51,22 @@ fn draw(buffer: &mut Buffer) {
         Sphere {
             origin: Vec3::new(3.2, 1.8, -10.0),
             radius: 2.0,
-            material: Material {
-                diffuse_color: Rgb(250, 50, 50),
-                shininess: 1.0,
-                albedo: (0.9, 0.1),
-            },
+            material: &RUBBERY_RED,
         },
         Sphere {
             origin: Vec3::new(4.0, 0.8, -7.0),
             radius: 1.0,
-            material: Material {
-                diffuse_color: Rgb(50, 250, 50),
-                shininess: 50.0,
-                albedo: (0.8, 0.5),
-            },
+            material: &GLOSSY_GREEN,
         },
         Sphere {
             origin: Vec3::new(-1.0, 0.2, -5.0),
             radius: 1.0,
-            material: Material {
-                diffuse_color: Rgb(50, 50, 250),
-                shininess: 200.0,
-                albedo: (0.4, 0.6),
-            },
+            material: &GLOSSY_BLUE,
         },
         Sphere {
             origin: Vec3::new(-2.2, 4.5, -16.0),
             radius: 4.0,
-            material: Material {
-                diffuse_color: Rgb(200, 150, 70),
-                shininess: 20.0,
-                albedo: (0.5, 0.1),
-            },
+            material: &GLOSSY_BLUE,
         },
     ];
 
@@ -97,7 +81,7 @@ fn draw(buffer: &mut Buffer) {
         },
     ];
 
-    let spec_base_color = Rgb(255, 255, 255);
+    let spec_base_color = Rgb::new(255, 255, 255);
 
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
@@ -152,18 +136,36 @@ fn draw(buffer: &mut Buffer) {
 }
 
 #[derive(Debug, PartialEq)]
-struct Sphere {
+struct Sphere<'a> {
     origin: Vec3,
     radius: f32,
-    material: Material,
+    material: &'a Material,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Material {
     diffuse_color: Rgb,
     shininess: f32,
     albedo: (f32, f32), // what portion of light reflects diffusely and what reflects specularely
 }
+
+static GLOSSY_BLUE: Material = Material {
+    diffuse_color: Rgb::new(50, 50, 170),
+    shininess: 200.0,
+    albedo: (0.5, 0.5),
+};
+
+static RUBBERY_RED: Material = Material {
+    diffuse_color: Rgb::new(190, 30, 30),
+    shininess: 10.0,
+    albedo: (0.9, 0.1),
+};
+
+static GLOSSY_GREEN: Material = Material {
+    diffuse_color: Rgb::new(50, 250, 50),
+    shininess: 50.0,
+    albedo: (0.8, 0.6),
+};
 
 struct Light {
     origin: Vec3,

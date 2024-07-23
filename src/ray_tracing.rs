@@ -5,7 +5,7 @@ pub fn scene_intersect<'a>(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
     spheres: &'a Vec<Sphere>,
-) -> Option<(&'a Sphere, f32)> {
+) -> Option<(&'a Sphere<'a>, f32)> {
     let mut closest = f32::MAX;
     let mut closest_sphere: Option<(&Sphere, f32)> = None;
     for sphere in spheres {
@@ -57,29 +57,17 @@ mod tests {
             Sphere {
                 origin: Vec3::new(3.0, 0.0, 0.0),
                 radius: 1.0,
-                material: Material {
-                    diffuse_color: Rgb(255, 0, 0),
-                    shininess: 0.0,
-                    albedo: (0.5, 0.5),
-                },
+                material: &RED,
             },
             Sphere {
                 origin: Vec3::new(4.0, 0.0, 0.0),
                 radius: 1.5,
-                material: Material {
-                    diffuse_color: Rgb(0, 0, 0),
-                    shininess: 0.0,
-                    albedo: (0.5, 0.5),
-                },
+                material: &BLACK,
             },
             Sphere {
                 origin: Vec3::new(-10.0, 0.0, 0.0),
                 radius: 1.5,
-                material: Material {
-                    diffuse_color: Rgb(0, 0, 255),
-                    shininess: 0.0,
-                    albedo: (0.5, 0.5),
-                },
+                material: &BLACK,
             },
         ];
 
@@ -91,7 +79,7 @@ mod tests {
 
         assert_eq!(
             intersection.unwrap().0.material.diffuse_color,
-            Rgb(255, 0, 0)
+            Rgb::new(255, 0, 0)
         );
     }
 
@@ -100,11 +88,7 @@ mod tests {
         let sphere = Sphere {
             origin: Vec3::new(3.0, 0.0, 0.0),
             radius: 2.0,
-            material: Material {
-                diffuse_color: Rgb(255, 0, 0),
-                shininess: 0.0,
-                albedo: (0.5, 0.5),
-            },
+            material: &RED,
         };
 
         let distance = ray_intersects(
@@ -121,11 +105,7 @@ mod tests {
         let sphere = Sphere {
             origin: Vec3::new(-3.0, 0.0, 0.0),
             radius: 2.0,
-            material: Material {
-                diffuse_color: Rgb(255, 0, 0),
-                shininess: 0.0,
-                albedo: (0.5, 0.5),
-            },
+            material: &RED,
         };
 
         let distance = ray_intersects(
@@ -142,11 +122,7 @@ mod tests {
         let sphere = Sphere {
             origin: Vec3::new(1.0, 1.0, 0.0),
             radius: 2.0,
-            material: Material {
-                diffuse_color: Rgb(255, 0, 0),
-                shininess: 0.0,
-                albedo: (0.5, 0.5),
-            },
+            material: &RED,
         };
 
         let distance = ray_intersects(
@@ -157,4 +133,16 @@ mod tests {
 
         assert_eq!(distance, None);
     }
+
+    const RED: Material = Material {
+        diffuse_color: Rgb::new(255, 0, 0),
+        shininess: 0.0,
+        albedo: (0.5, 0.5),
+    };
+
+    const BLACK: Material = Material {
+        diffuse_color: Rgb::new(0, 0, 0),
+        shininess: 0.0,
+        albedo: (0.5, 0.5),
+    };
 }

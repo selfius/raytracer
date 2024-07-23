@@ -13,10 +13,10 @@ pub struct Rgb {
     values: [u8; 3],
 }
 
-#[allow(non_snake_case)]
-//todo maybe generalize Vec3 and make this its alias
-pub fn Rgb(r: u8, g: u8, b: u8) -> Rgb {
-    Rgb { values: [r, g, b] }
+impl Rgb {
+    pub const fn new(r: u8, g: u8, b: u8) -> Rgb {
+        Rgb { values: [r, g, b] }
+    }
 }
 
 impl Mul<f32> for Rgb {
@@ -47,17 +47,17 @@ mod rgb_test {
 
     #[test]
     fn rgb_multiplication() {
-        assert_eq!(Rgb(100, 10, 200) * 0.8, Rgb(80, 8, 160));
+        assert_eq!(Rgb::new(100, 10, 200) * 0.8, Rgb::new(80, 8, 160));
     }
 
     #[test]
     fn rgb_multiplication_out_of_bound() {
-        assert_eq!(Rgb(100, 10, 200) * 2.0, Rgb(200, 20, 255));
+        assert_eq!(Rgb::new(100, 10, 200) * 2.0, Rgb::new(200, 20, 255));
     }
 
     #[test]
     fn rgb_addition() {
-        assert_eq!(Rgb(100, 10, 200) + Rgb(100, 10, 200), Rgb(200, 20, 255));
+        assert_eq!(Rgb::new(100, 10, 200) + Rgb::new(100, 10, 200), Rgb::new(200, 20, 255));
     }
 }
 
