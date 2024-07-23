@@ -1,11 +1,11 @@
-use super::Sphere;
+use crate::scene::Sphere;
 use crate::vector_math::Vec3;
 
 pub fn scene_intersect<'a>(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
     spheres: &'a Vec<Sphere>,
-) -> Option<(&'a Sphere<'a>, f32)> {
+) -> Option<(&'a Sphere, f32)> {
     let mut closest = f32::MAX;
     let mut closest_sphere: Option<(&Sphere, f32)> = None;
     for sphere in spheres {
@@ -49,7 +49,8 @@ fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> O
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{buffer::Rgb, Material, Sphere};
+    use crate::buffer::Rgb;
+    use crate::scene::{Material, Sphere};
 
     #[test]
     fn scene_intersect_picks_closest() {
