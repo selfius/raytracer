@@ -1,7 +1,9 @@
 pub mod buffer;
 mod ray_tracing;
-mod vector_math;
 mod scene;
+mod vector_math;
+
+use scene::Scene;
 
 use crate::buffer::{Buffer, Point, Rgb};
 use crate::vector_math::Vec3;
@@ -12,7 +14,6 @@ pub const CHANNELS: u8 = 3;
 
 const HORIZONTAL_FOV: f32 = 90.0;
 
-
 pub fn draw(buffer: &mut Buffer) {
     let camera_position = Vec3::new(0.0, 1.0, 0.0);
     let looking_direction = Vec3::new(0.0, 0.0, -1.0);
@@ -20,8 +21,6 @@ pub fn draw(buffer: &mut Buffer) {
         set_up_3d_world(camera_position, looking_direction);
 
     let scene = scene::create_scene();
-
-    let spec_base_color = Rgb::new(255, 255, 255);
 
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
@@ -32,48 +31,77 @@ pub fn draw(buffer: &mut Buffer) {
                 + in_world_top_left
                 - camera_position;
 
-            if let Some((sphere, distance)) =
-                ray_tracing::scene_intersect(&camera_position, &camera_to_pixel_direction, &scene.spheres)
-            {
-                let mut diffuse_intensity: f32 = 0.0;
-                let mut specular_intensity: f32 = 0.0;
-
-                let point_on_sphere =
-                    camera_position + (camera_to_pixel_direction.normalize() * distance);
-                let normal = (point_on_sphere - sphere.origin).normalize();
-
-                for light in &scene.lights {
-                    let light_direction = (light.origin - point_on_sphere).normalize();
-
-                    if let Some((obstructing_sphere, _)) = ray_tracing::scene_intersect(
-                        &light.origin,
-                        &(point_on_sphere - light.origin),
-                        &scene.spheres,
-                    ) {
-                        if obstructing_sphere != sphere {
-                            continue;
-                        }
-                    }
-
-                    diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
-
-                    specular_intensity += (light_direction.reflection(&normal)
-                        * (camera_to_pixel_direction.normalize() * -1.0))
-                        .max(0.0)
-                        .powf(sphere.material.shininess);
-                }
-
-                buffer.set(
-                    &Point(x, y),
-                    &(sphere.material.diffuse_color.clone()
-                        * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
-                        + spec_base_color.clone()
-                            * (specular_intensity * sphere.material.albedo.1)),
-                );
-            };
+            buffer.set(
+                &Point(x, y),
+                &cast_ray(&camera_position, &camera_to_pixel_direction, &scene, 0),
+            );
         }
     }
 }
+
+fn cast_ray(
+    camera_position: &Vec3,
+    camera_to_pixel_direction: &Vec3,
+    scene: &Scene,
+    bounce_count: u8,
+) -> Rgb {
+    if let Some((sphere, distance)) =
+        ray_tracing::scene_intersect(camera_position, camera_to_pixel_direction, &scene.spheres)
+    {
+        let mut diffuse_intensity: f32 = 0.0;
+        let mut specular_intensity: f32 = 0.0;
+
+        let point_on_sphere = *camera_position + (camera_to_pixel_direction.normalize() * distance);
+        let normal = (point_on_sphere - sphere.origin).normalize();
+
+        for light in &scene.lights {
+            let light_direction = (light.origin - point_on_sphere).normalize();
+
+            if let Some((obstructing_sphere, _)) = ray_tracing::scene_intersect(
+                &light.origin,
+                &(point_on_sphere - light.origin),
+                &scene.spheres,
+            ) {
+                if obstructing_sphere != sphere {
+                    continue;
+                }
+            }
+
+            diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
+
+            specular_intensity += (light_direction.reflection(&normal)
+                * (camera_to_pixel_direction.normalize() * -1.0))
+                .max(0.0)
+                .powf(sphere.material.shininess);
+        }
+
+        let mut reflection_component = Rgb::new(0, 0, 0);
+
+        if bounce_count < BOUNCE_LIMIT && sphere.material.albedo.2 > 0.0 {
+            let camera_ray_bounce = (*camera_to_pixel_direction * -1.0)
+                .normalize()
+                .reflection(&normal);
+            reflection_component = cast_ray(
+                &point_on_sphere,
+                &camera_ray_bounce,
+                scene,
+                bounce_count + 1,
+            ) * sphere.material.albedo.2;
+        }
+
+        return sphere.material.diffuse_color.clone()
+            * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
+            + SPEC_BASE_COLOR.clone() * (specular_intensity * sphere.material.albedo.1)
+            + reflection_component;
+    }
+    BACKGROUND_COLOR
+}
+
+const BACKGROUND_COLOR: Rgb = Rgb::new(134, 75, 165);
+
+const SPEC_BASE_COLOR: Rgb = Rgb::new(255, 255, 255);
+
+const BOUNCE_LIMIT: u8 = 4;
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
     // TODO: we should take into account looking direction to calculate virtual screen placement
