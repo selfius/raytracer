@@ -108,48 +108,45 @@ fn draw(buffer: &mut Buffer) {
                 + in_world_top_left
                 - camera_position;
 
-            match ray_tracing::scene_intersect(
-                &camera_position,
-                &camera_to_pixel_direction,
-                &spheres,
-            ) {
-                Some((sphere, distance)) => {
-                    let mut diffuse_intensity: f32 = 0.0;
-                    let mut specular_intensity: f32 = 0.0;
+            if let Some((sphere, distance)) =
+                ray_tracing::scene_intersect(&camera_position, &camera_to_pixel_direction, &spheres)
+            {
+                let mut diffuse_intensity: f32 = 0.0;
+                let mut specular_intensity: f32 = 0.0;
 
-                    let point_on_sphere =
-                        camera_position + (camera_to_pixel_direction.normalize() * distance);
-                    let normal = (point_on_sphere - sphere.origin).normalize();
+                let point_on_sphere =
+                    camera_position + (camera_to_pixel_direction.normalize() * distance);
+                let normal = (point_on_sphere - sphere.origin).normalize();
 
-                    for light in &lights {
-                        let light_direction = (light.origin - point_on_sphere).normalize();
-                        let obstructing_sphere = ray_tracing::scene_intersect(
-                            &light.origin,
-                            &(point_on_sphere - light.origin),
-                            &spheres,
-                        );
-                        if obstructing_sphere.is_some() && obstructing_sphere.unwrap().0 != sphere {
+                for light in &lights {
+                    let light_direction = (light.origin - point_on_sphere).normalize();
+
+                    if let Some((obstructing_sphere, _)) = ray_tracing::scene_intersect(
+                        &light.origin,
+                        &(point_on_sphere - light.origin),
+                        &spheres,
+                    ) {
+                        if obstructing_sphere != sphere {
                             continue;
                         }
-
-                        diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
-
-                        specular_intensity += (light_direction.reflection(&normal)
-                            * (camera_to_pixel_direction.normalize() * -1.0))
-                            .max(0.0)
-                            .powf(sphere.material.shininess);
                     }
 
-                    buffer.set(
-                        &Point(x, y),
-                        &(sphere.material.diffuse_color.clone()
-                            * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
-                            + spec_base_color.clone()
-                                * (specular_intensity * sphere.material.albedo.1)),
-                    );
+                    diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
+
+                    specular_intensity += (light_direction.reflection(&normal)
+                        * (camera_to_pixel_direction.normalize() * -1.0))
+                        .max(0.0)
+                        .powf(sphere.material.shininess);
                 }
-                _ => (),
-            }
+
+                buffer.set(
+                    &Point(x, y),
+                    &(sphere.material.diffuse_color.clone()
+                        * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
+                        + spec_base_color.clone()
+                            * (specular_intensity * sphere.material.albedo.1)),
+                );
+            };
         }
     }
 }
