@@ -40,18 +40,18 @@ pub fn draw(buffer: &mut Buffer) {
 }
 
 fn cast_ray(
-    camera_position: &Vec3,
-    camera_to_pixel_direction: &Vec3,
+    ray_origin: &Vec3,
+    ray_direction: &Vec3,
     scene: &Scene,
     bounce_count: u8,
 ) -> Rgb {
     if let Some((sphere, distance)) =
-        ray_tracing::scene_intersect(camera_position, camera_to_pixel_direction, &scene.spheres)
+        ray_tracing::scene_intersect(ray_origin, ray_direction, &scene.spheres)
     {
         let mut diffuse_intensity: f32 = 0.0;
         let mut specular_intensity: f32 = 0.0;
 
-        let point_on_sphere = *camera_position + (camera_to_pixel_direction.normalize() * distance);
+        let point_on_sphere = *ray_origin + (ray_direction.normalize() * distance);
         let normal = (point_on_sphere - sphere.origin).normalize();
 
         for light in &scene.lights {
@@ -70,7 +70,7 @@ fn cast_ray(
             diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
 
             specular_intensity += (light_direction.reflection(&normal)
-                * (camera_to_pixel_direction.normalize() * -1.0))
+                * (ray_direction.normalize() * -1.0))
                 .max(0.0)
                 .powf(sphere.material.shininess);
         }
@@ -78,11 +78,14 @@ fn cast_ray(
         let mut reflection_component = Rgb::new(0, 0, 0);
 
         if bounce_count < BOUNCE_LIMIT && sphere.material.albedo.2 > 0.0 {
-            let camera_ray_bounce = (*camera_to_pixel_direction * -1.0)
+            let camera_ray_bounce = (*ray_direction * -1.0)
                 .normalize()
                 .reflection(&normal);
+
+            let point_outside_sphere = *ray_origin + (ray_direction.normalize() * (distance - ROUNDING_COMPENSATION)); 
+
             reflection_component = cast_ray(
-                &point_on_sphere,
+                &point_outside_sphere,
                 &camera_ray_bounce,
                 scene,
                 bounce_count + 1,
@@ -102,6 +105,8 @@ const BACKGROUND_COLOR: Rgb = Rgb::new(134, 75, 165);
 const SPEC_BASE_COLOR: Rgb = Rgb::new(255, 255, 255);
 
 const BOUNCE_LIMIT: u8 = 4;
+
+const ROUNDING_COMPENSATION: f32 = 0.001;
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
     // TODO: we should take into account looking direction to calculate virtual screen placement

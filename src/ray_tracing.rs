@@ -27,20 +27,15 @@ pub fn scene_intersect<'a>(
 fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> Option<f32> {
     let normalized_ray_direction = ray_direction.normalize();
     let ray_origin_to_sphere = sphere.origin - *ray_origin;
-    if ray_origin_to_sphere.magnitude() < sphere.radius {
-        return None;
-    }
-    if ray_origin_to_sphere * normalized_ray_direction > 0.0 {
-        let center_to_ray = (ray_origin_to_sphere.magnitude().powi(2)
-            - (ray_origin_to_sphere * normalized_ray_direction).powi(2))
-        .sqrt();
-        if center_to_ray < sphere.radius {
-            let distance = (normalized_ray_direction
-                * (ray_origin_to_sphere * normalized_ray_direction)
-                - ray_direction.normalize()
-                    * (sphere.radius.powi(2) - center_to_ray.powi(2)).sqrt())
-            .magnitude();
-            return Option::Some(distance);
+    let center_to_ray_square = ray_origin_to_sphere.magnitude().powi(2)
+        - (ray_origin_to_sphere * normalized_ray_direction).powi(2);
+    if center_to_ray_square <= sphere.radius.powi(2) {
+        let distance_to_intersection_with_ray = ray_origin_to_sphere * normalized_ray_direction;
+        let delta = (sphere.radius.powi(2) - center_to_ray_square).sqrt();
+        if distance_to_intersection_with_ray - delta >= 0.0 {
+            return Some(distance_to_intersection_with_ray - delta);
+        } else if distance_to_intersection_with_ray + delta >= 0.0 {
+            return Some(distance_to_intersection_with_ray + delta);
         }
     }
     Option::None
@@ -121,7 +116,7 @@ mod tests {
     #[test]
     fn ray_intersects_with_camera_inside_sphere() {
         let sphere = Sphere {
-            origin: Vec3::new(1.0, 1.0, 0.0),
+            origin: Vec3::new(-1.0, 0.0, 0.0),
             radius: 2.0,
             material: &RED,
         };
@@ -132,7 +127,7 @@ mod tests {
             &sphere,
         );
 
-        assert_eq!(distance, None);
+        assert_eq!(distance, Some(1.0));
     }
 
     const RED: Material = Material {
