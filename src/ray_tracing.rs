@@ -133,12 +133,14 @@ mod tests {
     const RED: Material = Material {
         diffuse_color: Rgb::new(255, 0, 0),
         shininess: 0.0,
-        albedo: (0.5, 0.5, 0.0),
+        albedo: (0.5, 0.5, 0.0, 0.0),
+        refractive_index: 0.0,
     };
 
     const BLACK: Material = Material {
         diffuse_color: Rgb::new(0, 0, 0),
         shininess: 0.0,
-        albedo: (0.5, 0.5, 0.0),
+        albedo: (0.5, 0.5, 0.0, 0.0),
+        refractive_index: 0.0,
     };
 }

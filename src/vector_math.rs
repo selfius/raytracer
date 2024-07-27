@@ -70,9 +70,22 @@ impl Vec3 {
     }
 
     pub fn reflection(self, normal: &Vec3) -> Vec3 {
-        let normal_copy = normal.clone().normalize();
+        let normal = normal.clone().normalize();
         let normalized_self = self.normalize();
-        normal_copy * (2.0 * (normalized_self * normal_copy)) - normalized_self
+        normal * (2.0 * (normalized_self * normal)) - normalized_self
+    }
+
+    pub fn refraction(
+        self,
+        normal: &Vec3,
+        current_refraction_index: f32,
+        next_refraction_index: f32,
+    ) -> Vec3 {
+        let normal = normal.normalize();
+        let normalized_self = self.normalize();
+        let r = current_refraction_index / next_refraction_index;
+        let c = -normal * normalized_self;
+        (self * r + normal * (r * c - f32::sqrt(1.0 - r.powi(2) * (1.0 - c.powi(2))))).normalize()
     }
 }
 
@@ -126,5 +139,22 @@ mod test {
     fn reflection() {
         let reflected_vector = Vec3::new(1.0, 1.0, 0.0).reflection(&Vec3::new(0.0, 1.0, 0.0));
         assert_eq!(reflected_vector, Vec3::new(-1.0, 1.0, 0.0).normalize());
+    }
+
+    #[test]
+    fn refraction() {
+        let refracted_vector =
+            Vec3::new(1.0, -1.0, 0.0).refraction(&Vec3::new(0.0, 1.0, 0.0), 1.0, 1.1);
+        let [x, y, z] = refracted_vector.values;
+        assert_eq!(
+            Vec3 {
+                values: [cap_float(x), cap_float(y), cap_float(z)]
+            },
+            Vec3::new(0.7, -0.8, 0.0)
+        );
+    }
+
+    fn cap_float(value: f32) -> f32 {
+        (value * 10.0).round() / 10.0
     }
 }

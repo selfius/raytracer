@@ -27,7 +27,7 @@ pub fn create_scene() -> Scene {
             Sphere {
                 origin: Vec3::new(-1.2, -0.6, -4.0),
                 radius: 0.7,
-                material: &MIRROR,
+                material: &GLASS,
             },
         ],
         lights: vec![
@@ -59,7 +59,8 @@ pub struct Sphere {
 pub struct Material {
     pub diffuse_color: Rgb,
     pub shininess: f32,
-    pub albedo: (f32, f32, f32), // diffuse, specular, reflection
+    pub albedo: (f32, f32, f32, f32), // diffuse, specular, reflection
+    pub refractive_index: f32,
 }
 pub struct Light {
     pub origin: Vec3,
@@ -69,23 +70,34 @@ pub struct Light {
 static GLOSSY_BLUE: Material = Material {
     diffuse_color: Rgb::new(50, 50, 170),
     shininess: 200.0,
-    albedo: (0.5, 0.5, 0.0),
+    albedo: (0.5, 0.5, 0.0, 0.0),
+    refractive_index: 0.0,
 };
 
 static RUBBERY_RED: Material = Material {
     diffuse_color: Rgb::new(190, 30, 30),
     shininess: 10.0,
-    albedo: (0.9, 0.1, 0.0),
+    albedo: (0.9, 0.1, 0.0, 0.0),
+    refractive_index: 0.0,
 };
 
 static GLOSSY_GREEN: Material = Material {
     diffuse_color: Rgb::new(50, 250, 50),
     shininess: 50.0,
-    albedo: (0.8, 0.6, 0.1),
+    albedo: (0.8, 0.6, 0.1, 0.0),
+    refractive_index: 0.0,
 };
 
 static MIRROR: Material = Material {
     diffuse_color: Rgb::new(10, 10, 10),
     shininess: 200.0,
-    albedo: (0.2, 0.6, 0.8),
+    albedo: (0.2, 0.6, 0.8, 0.0),
+    refractive_index: 0.0,
+};
+
+static GLASS: Material = Material {
+    diffuse_color: Rgb::new(10, 10, 10),
+    shininess: 200.0,
+    albedo: (0.0, 0.6, 0.0, 0.9),
+    refractive_index: 1.8,
 };

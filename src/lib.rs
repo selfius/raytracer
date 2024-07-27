@@ -3,7 +3,7 @@ mod ray_tracing;
 mod scene;
 mod vector_math;
 
-use scene::Scene;
+use scene::{Scene, Sphere};
 
 use crate::buffer::{Buffer, Point, Rgb};
 use crate::vector_math::Vec3;
@@ -33,13 +33,25 @@ pub fn draw(buffer: &mut Buffer) {
 
             buffer.set(
                 &Point(x, y),
-                &cast_ray(&camera_position, &camera_to_pixel_direction, &scene, 0),
+                &cast_ray(
+                    &camera_position,
+                    &camera_to_pixel_direction,
+                    &scene,
+                    0,
+                    None,
+                ),
             );
         }
     }
 }
 
-fn cast_ray(ray_origin: &Vec3, ray_direction: &Vec3, scene: &Scene, bounce_count: u8) -> Rgb {
+fn cast_ray(
+    ray_origin: &Vec3,
+    ray_direction: &Vec3,
+    scene: &Scene,
+    bounce_count: u8,
+    current_medium: Option<&Sphere>,
+) -> Rgb {
     if let Some((sphere, distance)) =
         ray_tracing::scene_intersect(ray_origin, ray_direction, &scene.spheres)
     {
@@ -66,32 +78,75 @@ fn cast_ray(ray_origin: &Vec3, ray_direction: &Vec3, scene: &Scene, bounce_count
 
             diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
 
-            specular_intensity += (light_direction.reflection(&normal)
-                * -ray_direction.normalize())
-            .max(0.0)
-            .powf(sphere.material.shininess);
+            specular_intensity += (light_direction.reflection(&normal) * -ray_direction)
+                .max(0.0)
+                .powf(sphere.material.shininess);
         }
 
         let mut reflection_component = Rgb::new(0, 0, 0);
+        let mut refraction_component = Rgb::new(0, 0, 0);
 
-        if bounce_count < BOUNCE_LIMIT && sphere.material.albedo.2 > 0.0 {
-            let camera_ray_bounce = -ray_direction.reflection(&normal);
+        if bounce_count < BOUNCE_LIMIT {
+            if sphere.material.albedo.2 > 0.0 {
+                let reflection_direction = -ray_direction.reflection(&normal);
 
-            let point_outside_sphere =
-                *ray_origin + (ray_direction.normalize() * (distance - ROUNDING_COMPENSATION));
+                let rounding_error_compensation = if reflection_direction * normal > 0.0 {
+                    -ROUNDING_COMPENSATION
+                } else {
+                    ROUNDING_COMPENSATION
+                };
 
-            reflection_component = cast_ray(
-                &point_outside_sphere,
-                &camera_ray_bounce,
-                scene,
-                bounce_count + 1,
-            ) * sphere.material.albedo.2;
+                let reflection_origin =
+                    *ray_origin + (ray_direction * (distance + rounding_error_compensation));
+                reflection_component = cast_ray(
+                    &reflection_origin,
+                    &reflection_direction,
+                    scene,
+                    bounce_count + 1,
+                    None,
+                ) * sphere.material.albedo.2;
+            }
+            if sphere.material.albedo.3 > 0.0 {
+                let next_refraction_medium = match current_medium {
+                    None => Some(sphere),
+                    Some(_) => None,
+                };
+
+                let normal = normal * current_medium.map_or(1.0, |_| -1.0);
+
+                let get_reflective_index_from_sphere =
+                    |sphere: &Sphere| sphere.material.refractive_index;
+
+                let current_index = current_medium.map_or(1.0, get_reflective_index_from_sphere);
+                let next_index =
+                    next_refraction_medium.map_or(1.0, get_reflective_index_from_sphere);
+
+                let refraction_direciton =
+                    ray_direction.refraction(&normal, current_index, next_index);
+
+                let rounding_error_compensation = if refraction_direciton * normal > 0.0 {
+                    -ROUNDING_COMPENSATION
+                } else {
+                    ROUNDING_COMPENSATION
+                };
+
+                let refraction_origin =
+                    *ray_origin + (ray_direction * (distance + rounding_error_compensation));
+                refraction_component = cast_ray(
+                    &refraction_origin,
+                    &refraction_direciton,
+                    scene,
+                    bounce_count + 1,
+                    next_refraction_medium,
+                ) * sphere.material.albedo.3;
+            }
         }
 
         return sphere.material.diffuse_color.clone()
             * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
             + SPEC_BASE_COLOR.clone() * (specular_intensity * sphere.material.albedo.1)
-            + reflection_component;
+            + reflection_component
+            + refraction_component;
     }
     BACKGROUND_COLOR
 }
@@ -102,7 +157,7 @@ const SPEC_BASE_COLOR: Rgb = Rgb::new(255, 255, 255);
 
 const BOUNCE_LIMIT: u8 = 4;
 
-const ROUNDING_COMPENSATION: f32 = 0.001;
+const ROUNDING_COMPENSATION: f32 = 0.01;
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
     // TODO: we should take into account looking direction to calculate virtual screen placement
