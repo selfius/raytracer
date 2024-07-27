@@ -25,12 +25,12 @@ pub fn scene_intersect<'a>(
 }
 
 fn ray_intersects(ray_origin: &Vec3, ray_direction: &Vec3, sphere: &Sphere) -> Option<f32> {
-    let normalized_ray_direction = ray_direction.normalize();
+    let ray_direction = ray_direction.normalize();
     let ray_origin_to_sphere = sphere.origin - *ray_origin;
-    let center_to_ray_square = ray_origin_to_sphere.magnitude().powi(2)
-        - (ray_origin_to_sphere * normalized_ray_direction).powi(2);
+    let center_to_ray_square =
+        ray_origin_to_sphere.magnitude().powi(2) - (ray_origin_to_sphere * ray_direction).powi(2);
     if center_to_ray_square <= sphere.radius.powi(2) {
-        let distance_to_intersection_with_ray = ray_origin_to_sphere * normalized_ray_direction;
+        let distance_to_intersection_with_ray = ray_origin_to_sphere * ray_direction;
         let delta = (sphere.radius.powi(2) - center_to_ray_square).sqrt();
         if distance_to_intersection_with_ray - delta >= 0.0 {
             return Some(distance_to_intersection_with_ray - delta);

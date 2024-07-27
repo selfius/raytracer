@@ -39,19 +39,16 @@ pub fn draw(buffer: &mut Buffer) {
     }
 }
 
-fn cast_ray(
-    ray_origin: &Vec3,
-    ray_direction: &Vec3,
-    scene: &Scene,
-    bounce_count: u8,
-) -> Rgb {
+fn cast_ray(ray_origin: &Vec3, ray_direction: &Vec3, scene: &Scene, bounce_count: u8) -> Rgb {
     if let Some((sphere, distance)) =
         ray_tracing::scene_intersect(ray_origin, ray_direction, &scene.spheres)
     {
         let mut diffuse_intensity: f32 = 0.0;
         let mut specular_intensity: f32 = 0.0;
 
-        let point_on_sphere = *ray_origin + (ray_direction.normalize() * distance);
+        let ray_direction = ray_direction.normalize();
+
+        let point_on_sphere = *ray_origin + (ray_direction * distance);
         let normal = (point_on_sphere - sphere.origin).normalize();
 
         for light in &scene.lights {
@@ -70,19 +67,18 @@ fn cast_ray(
             diffuse_intensity += (light_direction * normal).max(0.0) * light.intensity;
 
             specular_intensity += (light_direction.reflection(&normal)
-                * (ray_direction.normalize() * -1.0))
-                .max(0.0)
-                .powf(sphere.material.shininess);
+                * -ray_direction.normalize())
+            .max(0.0)
+            .powf(sphere.material.shininess);
         }
 
         let mut reflection_component = Rgb::new(0, 0, 0);
 
         if bounce_count < BOUNCE_LIMIT && sphere.material.albedo.2 > 0.0 {
-            let camera_ray_bounce = (*ray_direction * -1.0)
-                .normalize()
-                .reflection(&normal);
+            let camera_ray_bounce = -ray_direction.reflection(&normal);
 
-            let point_outside_sphere = *ray_origin + (ray_direction.normalize() * (distance - ROUNDING_COMPENSATION)); 
+            let point_outside_sphere =
+                *ray_origin + (ray_direction.normalize() * (distance - ROUNDING_COMPENSATION));
 
             reflection_component = cast_ray(
                 &point_outside_sphere,
