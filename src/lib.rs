@@ -3,7 +3,7 @@ mod ray_tracing;
 mod scene;
 mod vector_math;
 
-use scene::{Scene, Sphere};
+use scene::{Object, Scene};
 
 use crate::buffer::{Buffer, Point, Rgb};
 use crate::vector_math::Vec3;
@@ -50,10 +50,10 @@ fn cast_ray(
     ray_direction: &Vec3,
     scene: &Scene,
     bounce_count: u8,
-    current_medium: Option<&Sphere>,
+    current_medium: Option<&Object>,
 ) -> Rgb {
-    if let Some((sphere, distance)) =
-        ray_tracing::scene_intersect(ray_origin, ray_direction, &scene.spheres)
+    if let Some((sphere, distance, normal)) =
+        ray_tracing::scene_intersect(ray_origin, ray_direction, &scene)
     {
         let mut diffuse_intensity: f32 = 0.0;
         let mut specular_intensity: f32 = 0.0;
@@ -61,17 +61,17 @@ fn cast_ray(
         let ray_direction = ray_direction.normalize();
 
         let point_on_sphere = *ray_origin + (ray_direction * distance);
-        let normal = (point_on_sphere - sphere.origin).normalize();
+        let normal = normal.normalize();
 
         for light in &scene.lights {
             let light_direction = (light.origin - point_on_sphere).normalize();
 
-            if let Some((obstructing_sphere, _)) = ray_tracing::scene_intersect(
+            if let Some((obstructing_object, _, _)) = ray_tracing::scene_intersect(
                 &light.origin,
                 &(point_on_sphere - light.origin),
-                &scene.spheres,
+                &scene,
             ) {
-                if obstructing_sphere != sphere {
+                if obstructing_object != sphere {
                     continue;
                 }
             }
@@ -115,7 +115,7 @@ fn cast_ray(
                 let normal = normal * current_medium.map_or(1.0, |_| -1.0);
 
                 let get_reflective_index_from_sphere =
-                    |sphere: &Sphere| sphere.material.refractive_index;
+                    |sphere: &Object| sphere.material.refractive_index;
 
                 let current_index = current_medium.map_or(1.0, get_reflective_index_from_sphere);
                 let next_index =
