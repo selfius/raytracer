@@ -1,5 +1,11 @@
+pub mod sphere;
+mod triangle;
+
 use crate::buffer::Rgb;
 use crate::vector_math::Vec3;
+
+use sphere::Sphere;
+use triangle::Triangle;
 
 pub fn create_scene() -> Scene {
     Scene {
@@ -39,6 +45,22 @@ pub fn create_scene() -> Scene {
                 }),
                 material: &GLASS,
             },
+            Object {
+                surface: Surface::Triangle(Triangle::new(
+                    Vec3::new(-6.0, 0.0, -13.0),
+                    Vec3::new(0.0, 6.0, -13.0),
+                    Vec3::new(-6.0, 6.0, -13.0),
+                )),
+                material: &GLOSSY_GREEN,
+            },
+            Object {
+                surface: Surface::Triangle(Triangle::new(
+                    Vec3::new(0.0, 6.0, -13.0),
+                    Vec3::new(-6.0, 0.0, -13.0),
+                    Vec3::new(0.0, 0.0, -13.0),
+                )),
+                material: &GLOSSY_GREEN,
+            },
         ],
         lights: vec![
             Light {
@@ -59,42 +81,9 @@ pub struct Scene {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Sphere {
-    pub origin: Vec3,
-    pub radius: f32,
-}
-
-impl Sphere {
-    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<(f32, Vec3)> {
-        let ray_direction = ray_direction.normalize();
-        let ray_origin_to_sphere = self.origin - *ray_origin;
-        let center_to_ray_square = ray_origin_to_sphere.magnitude().powi(2)
-            - (ray_origin_to_sphere * ray_direction).powi(2);
-        if center_to_ray_square <= self.radius.powi(2) {
-            let distance_to_intersection_with_ray = ray_origin_to_sphere * ray_direction;
-            let delta = (self.radius.powi(2) - center_to_ray_square).sqrt();
-            if distance_to_intersection_with_ray - delta >= 0.0 {
-                let distance = distance_to_intersection_with_ray - delta;
-                return Some((
-                    distance,
-                    ray_direction * distance + *ray_origin - self.origin,
-                ));
-            } else if distance_to_intersection_with_ray + delta >= 0.0 {
-                let distance = distance_to_intersection_with_ray + delta;
-                return Some((
-                    distance,
-                    ray_direction * distance + *ray_origin - self.origin,
-                ));
-            }
-        }
-
-        Option::None
-    }
-}
-#[derive(Debug, PartialEq)]
 pub enum Surface {
     Sphere(Sphere),
-    Triange(),
+    Triangle(Triangle),
 }
 
 impl Surface {
@@ -105,7 +94,7 @@ impl Surface {
     ) -> Option<(f32, Vec3)> {
         match self {
             Self::Sphere(sphere) => sphere.find_intersection(ray_origin, ray_direction),
-            _ => None,
+            Self::Triangle(triangle) => triangle.find_intersection(ray_origin, ray_direction),
         }
     }
 }
@@ -162,48 +151,3 @@ static GLASS: Material = Material {
     albedo: (0.0, 0.6, 0.0, 0.9),
     refractive_index: 1.8,
 };
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn ray_intersects_test() {
-        let sphere = Sphere {
-            origin: Vec3::new(3.0, 0.0, 0.0),
-            radius: 2.0,
-        };
-
-        let (distance, _) = sphere
-            .find_intersection(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0))
-            .unwrap();
-
-        assert_eq!(distance, 1.0);
-    }
-
-    #[test]
-    fn ray_intersects_with_sphere_behind_camera() {
-        let sphere = Sphere {
-            origin: Vec3::new(-3.0, 0.0, 0.0),
-            radius: 2.0,
-        };
-
-        let result = sphere.find_intersection(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0));
-
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn ray_intersects_with_camera_inside_sphere() {
-        let sphere = Sphere {
-            origin: Vec3::new(-1.0, 0.0, 0.0),
-            radius: 2.0,
-        };
-
-        let (distance, _) = sphere
-            .find_intersection(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0))
-            .unwrap();
-
-        assert_eq!(distance, 1.0);
-    }
-}

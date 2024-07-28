@@ -31,7 +31,7 @@ pub fn scene_intersect<'a>(
 mod tests {
     use super::*;
     use crate::buffer::Rgb;
-    use crate::scene::{Material, Sphere, Surface};
+    use crate::scene::{Material, sphere::Sphere, Surface};
 
     #[test]
     fn scene_intersect_picks_closest() {

@@ -87,6 +87,13 @@ impl Vec3 {
         let c = -normal * normalized_self;
         (self * r + normal * (r * c - f32::sqrt(1.0 - r.powi(2) * (1.0 - c.powi(2))))).normalize()
     }
+
+    pub fn cross_product(self, rhs: &Vec3) -> Vec3 {
+        let [x1, y1, z1] = self.values;
+        let [x2, y2, z2] = rhs.values;
+
+        Vec3::new(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2, x1 * y2 - y1 * x2)
+    }
 }
 
 #[cfg(test)]
@@ -152,6 +159,13 @@ mod test {
             },
             Vec3::new(0.7, -0.8, 0.0)
         );
+    }
+
+    #[test]
+    fn cross_product() {
+        let cross_product = Vec3::new(1.0, 0.0, 0.0).cross_product(&Vec3::new(0.0, 1.0, 0.0));
+
+        assert_eq!(cross_product, Vec3::new(0.0, 0.0, 1.0));
     }
 
     fn cap_float(value: f32) -> f32 {

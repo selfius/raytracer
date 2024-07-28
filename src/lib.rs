@@ -52,7 +52,7 @@ fn cast_ray(
     bounce_count: u8,
     current_medium: Option<&Object>,
 ) -> Rgb {
-    if let Some((sphere, distance, normal)) =
+    if let Some((object, distance, normal)) =
         ray_tracing::scene_intersect(ray_origin, ray_direction, &scene)
     {
         let mut diffuse_intensity: f32 = 0.0;
@@ -60,18 +60,18 @@ fn cast_ray(
 
         let ray_direction = ray_direction.normalize();
 
-        let point_on_sphere = *ray_origin + (ray_direction * distance);
+        let point_on_object = *ray_origin + (ray_direction * distance);
         let normal = normal.normalize();
 
         for light in &scene.lights {
-            let light_direction = (light.origin - point_on_sphere).normalize();
+            let light_direction = (light.origin - point_on_object).normalize();
 
             if let Some((obstructing_object, _, _)) = ray_tracing::scene_intersect(
                 &light.origin,
-                &(point_on_sphere - light.origin),
+                &(point_on_object - light.origin),
                 &scene,
             ) {
-                if obstructing_object != sphere {
+                if obstructing_object != object {
                     continue;
                 }
             }
@@ -80,14 +80,14 @@ fn cast_ray(
 
             specular_intensity += (light_direction.reflection(&normal) * -ray_direction)
                 .max(0.0)
-                .powf(sphere.material.shininess);
+                .powf(object.material.shininess);
         }
 
         let mut reflection_component = Rgb::new(0, 0, 0);
         let mut refraction_component = Rgb::new(0, 0, 0);
 
         if bounce_count < BOUNCE_LIMIT {
-            if sphere.material.albedo.2 > 0.0 {
+            if object.material.albedo.2 > 0.0 {
                 let reflection_direction = -ray_direction.reflection(&normal);
 
                 let rounding_error_compensation = if reflection_direction * normal > 0.0 {
@@ -104,11 +104,11 @@ fn cast_ray(
                     scene,
                     bounce_count + 1,
                     None,
-                ) * sphere.material.albedo.2;
+                ) * object.material.albedo.2;
             }
-            if sphere.material.albedo.3 > 0.0 {
+            if object.material.albedo.3 > 0.0 {
                 let next_refraction_medium = match current_medium {
-                    None => Some(sphere),
+                    None => Some(object),
                     Some(_) => None,
                 };
 
@@ -138,13 +138,13 @@ fn cast_ray(
                     scene,
                     bounce_count + 1,
                     next_refraction_medium,
-                ) * sphere.material.albedo.3;
+                ) * object.material.albedo.3;
             }
         }
 
-        return sphere.material.diffuse_color.clone()
-            * (diffuse_intensity * (sphere.material.albedo.0)).min(1.0)
-            + SPEC_BASE_COLOR.clone() * (specular_intensity * sphere.material.albedo.1)
+        return object.material.diffuse_color.clone()
+            * (diffuse_intensity * (object.material.albedo.0)).min(1.0)
+            + SPEC_BASE_COLOR.clone() * (specular_intensity * object.material.albedo.1)
             + reflection_component
             + refraction_component;
     }
