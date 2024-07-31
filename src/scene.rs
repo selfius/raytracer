@@ -1,9 +1,11 @@
+mod mesh;
 pub mod sphere;
 mod triangle;
 
 use crate::buffer::Rgb;
 use crate::vector_math::Vec3;
 
+use mesh::Mesh;
 use sphere::Sphere;
 use triangle::Triangle;
 
@@ -46,20 +48,8 @@ pub fn create_scene() -> Scene {
                 material: &GLASS,
             },
             Object {
-                surface: Surface::Triangle(Triangle::new(
-                    Vec3::new(-6.0, 0.0, -13.0),
-                    Vec3::new(0.0, 6.0, -13.0),
-                    Vec3::new(-6.0, 6.0, -13.0),
-                )),
-                material: &GLOSSY_GREEN,
-            },
-            Object {
-                surface: Surface::Triangle(Triangle::new(
-                    Vec3::new(0.0, 6.0, -13.0),
-                    Vec3::new(-6.0, 0.0, -13.0),
-                    Vec3::new(0.0, 0.0, -13.0),
-                )),
-                material: &GLOSSY_GREEN,
+                surface: Surface::Mesh(Mesh::from_obj_file("cube.obj")),
+                material: &RUBBERY_RED,
             },
         ],
         lights: vec![
@@ -84,6 +74,7 @@ pub struct Scene {
 pub enum Surface {
     Sphere(Sphere),
     Triangle(Triangle),
+    Mesh(Mesh),
 }
 
 impl Surface {
@@ -95,6 +86,7 @@ impl Surface {
         match self {
             Self::Sphere(sphere) => sphere.find_intersection(ray_origin, ray_direction),
             Self::Triangle(triangle) => triangle.find_intersection(ray_origin, ray_direction),
+            Self::Mesh(mesh) => mesh.find_intersection(ray_origin, ray_direction),
         }
     }
 }

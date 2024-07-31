@@ -14,6 +14,10 @@ impl Triangle {
         }
     }
 
+    pub fn normal(&self) -> Vec3 {
+        self.normal
+    }
+
     pub fn find_intersection(
         &self,
         ray_origin: &Vec3,
