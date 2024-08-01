@@ -1,4 +1,5 @@
 mod mesh;
+mod rect;
 pub mod sphere;
 mod triangle;
 
@@ -6,6 +7,7 @@ use crate::buffer::Rgb;
 use crate::vector_math::Vec3;
 
 use mesh::Mesh;
+use rect::Rect;
 use sphere::Sphere;
 use triangle::Triangle;
 
@@ -51,6 +53,15 @@ pub fn create_scene() -> Scene {
                 surface: Surface::Mesh(Mesh::from_obj_file("cube.obj")),
                 material: &RUBBERY_RED,
             },
+            Object {
+                surface: Surface::Rect(Rect::new(
+                    Vec3::new(-1.0,-2.0,-5.0),
+                    Vec3::new(-1.0,-2.0,-9.0),
+                    Vec3::new(3.0,-2.0,-9.0),
+                    Vec3::new(3.0,-2.0,-5.0),
+                    )),
+                material: &GLOSSY_GREEN,
+            },
         ],
         lights: vec![
             Light {
@@ -75,6 +86,7 @@ pub enum Surface {
     Sphere(Sphere),
     Triangle(Triangle),
     Mesh(Mesh),
+    Rect(Rect),
 }
 
 impl Surface {
@@ -87,6 +99,7 @@ impl Surface {
             Self::Sphere(sphere) => sphere.find_intersection(ray_origin, ray_direction),
             Self::Triangle(triangle) => triangle.find_intersection(ray_origin, ray_direction),
             Self::Mesh(mesh) => mesh.find_intersection(ray_origin, ray_direction),
+            Self::Rect(rect) => rect.find_intersection(ray_origin, ray_direction),
         }
     }
 }
