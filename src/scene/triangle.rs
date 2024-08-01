@@ -18,11 +18,11 @@ impl Triangle {
         self.normal
     }
 
-    pub fn find_intersection(
+    pub fn find_barycentric_intersection(
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
-    ) -> Option<(f32, Vec3)> {
+    ) -> Option<(f32, f32)> {
         let ray_direction = ray_direction.normalize();
         let direction_cross_normal = ray_direction * self.normal;
         if (direction_cross_normal < f32::EPSILON) && (direction_cross_normal > -f32::EPSILON) {
@@ -57,22 +57,46 @@ impl Triangle {
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
-        // At this stage we can compute t to find out where the intersection point is on the line.
-        let t = inv_det * (e2 * s_cross_e1);
+        Some((u, v))
+    }
 
-        if t > f32::EPSILON {
-            // ray intersection
-            return Some((t, self.normal));
-        } else {
-            // This means that there is a line intersection but not a ray intersection.
-            return None;
+    pub fn find_intersection(
+        &self,
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+    ) -> Option<(f32, Vec3)> {
+        let [a, b, c] = match self.vertices[..] {
+            [a, b, c] => [a, b, c],
+            _ => panic!("triangles have 3 vertices"),
+        };
+        if let Some((u, v)) = self.find_barycentric_intersection(ray_origin, ray_direction) {
+            let point_on_triangle = a + (b - a) * u + (c - a) * v;
+            let ray_origin_to_intersection = point_on_triangle - *ray_origin;
+            if ray_origin_to_intersection * *ray_direction > 0.0 {
+                return Some(((point_on_triangle - *ray_origin).magnitude(), self.normal));
+            }
         }
+        None
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn ray_intersects_triangle_at_barycentric_coordinates() {
+        let triangle = Triangle::new(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+        );
+
+        let intersection = triangle
+            .find_barycentric_intersection(&Vec3::new(0.5, 0.5, 1.0), &Vec3::new(0.0, 0.0, -2.0));
+
+        assert_eq!(Some((0.5, 0.5)), intersection);
+    }
 
     #[test]
     fn ray_intersects_triangle() {
