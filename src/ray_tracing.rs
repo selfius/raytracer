@@ -5,18 +5,18 @@ pub fn scene_intersect<'a>(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
     scene: &'a Scene,
-) -> Option<(&'a Object, f32, Vec3)> {
+) -> Option<(&'a Object, Intersection)> {
     let mut closest = f32::MAX;
-    let mut closest_object: Option<(&Object, f32, Vec3)> = None;
+    let mut closest_object: Option<(&Object, Intersection)> = None;
     for object in &scene.objects {
         closest_object = match object
             .surface
             .find_intersection(&ray_origin, &ray_direction)
         {
-            Some((distance, normal)) => {
-                if distance < closest && distance > 0.0 {
-                    closest = distance;
-                    Some((object, distance, normal))
+            Some(intersection) => {
+                if intersection.distance < closest && intersection.distance > 0.0 {
+                    closest = intersection.distance;
+                    Some((object, intersection))
                 } else {
                     closest_object
                 }
@@ -27,11 +27,18 @@ pub fn scene_intersect<'a>(
     closest_object
 }
 
+#[derive(Debug, PartialEq)]
+pub struct Intersection {
+    pub distance: f32,
+    pub normal: Vec3,
+    pub local_coords: Option<(f32, f32)>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::buffer::Rgb;
-    use crate::scene::{Material, sphere::Sphere, Surface};
+    use crate::scene::{sphere::Sphere, Material, Surface};
 
     #[test]
     fn scene_intersect_picks_closest() {

@@ -1,5 +1,7 @@
 use crate::vector_math::Vec3;
 
+use crate::ray_tracing::Intersection;
+
 #[derive(Debug, PartialEq)]
 pub struct Sphere {
     pub origin: Vec3,
@@ -7,7 +9,11 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<(f32, Vec3)> {
+    pub fn find_intersection(
+        &self,
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+    ) -> Option<Intersection> {
         let ray_direction = ray_direction.normalize();
         let ray_origin_to_sphere = self.origin - *ray_origin;
         let center_to_ray_square = ray_origin_to_sphere.magnitude().powi(2)
@@ -17,19 +23,20 @@ impl Sphere {
             let delta = (self.radius.powi(2) - center_to_ray_square).sqrt();
             if distance_to_intersection_with_ray - delta >= 0.0 {
                 let distance = distance_to_intersection_with_ray - delta;
-                return Some((
+                return Some(Intersection {
                     distance,
-                    ray_direction * distance + *ray_origin - self.origin,
-                ));
+                    normal: ray_direction * distance + *ray_origin - self.origin,
+                    local_coords: None,
+                });
             } else if distance_to_intersection_with_ray + delta >= 0.0 {
                 let distance = distance_to_intersection_with_ray + delta;
-                return Some((
+                return Some(Intersection {
                     distance,
-                    ray_direction * distance + *ray_origin - self.origin,
-                ));
+                    normal: ray_direction * distance + *ray_origin - self.origin,
+                    local_coords: None,
+                });
             }
         }
-
         Option::None
     }
 }
@@ -45,7 +52,7 @@ mod test {
             radius: 2.0,
         };
 
-        let (distance, _) = sphere
+        let Intersection { distance, .. } = sphere
             .find_intersection(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0))
             .unwrap();
 
@@ -71,7 +78,7 @@ mod test {
             radius: 2.0,
         };
 
-        let (distance, _) = sphere
+        let Intersection { distance, .. } = sphere
             .find_intersection(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0))
             .unwrap();
 

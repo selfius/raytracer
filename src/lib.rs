@@ -53,7 +53,7 @@ fn cast_ray(
     bounce_count: u8,
     current_medium: Option<&Object>,
 ) -> Rgb {
-    if let Some((object, distance, normal)) =
+    if let Some((object, intersection)) =
         ray_tracing::scene_intersect(ray_origin, ray_direction, &scene)
     {
         let mut diffuse_intensity: f32 = 0.0;
@@ -61,13 +61,13 @@ fn cast_ray(
 
         let ray_direction = ray_direction.normalize();
 
-        let point_on_object = *ray_origin + (ray_direction * distance);
-        let normal = normal.normalize();
+        let point_on_object = *ray_origin + (ray_direction * intersection.distance);
+        let normal = intersection.normal.normalize();
 
         for light in &scene.lights {
             let light_direction = (light.origin - point_on_object).normalize();
 
-            if let Some((obstructing_object, _, _)) = ray_tracing::scene_intersect(
+            if let Some((obstructing_object, _)) = ray_tracing::scene_intersect(
                 &light.origin,
                 &(point_on_object - light.origin),
                 &scene,
@@ -97,8 +97,8 @@ fn cast_ray(
                     ROUNDING_COMPENSATION
                 };
 
-                let reflection_origin =
-                    *ray_origin + (ray_direction * (distance + rounding_error_compensation));
+                let reflection_origin = *ray_origin
+                    + (ray_direction * (intersection.distance + rounding_error_compensation));
                 reflection_component = cast_ray(
                     &reflection_origin,
                     &reflection_direction,
@@ -131,8 +131,8 @@ fn cast_ray(
                     ROUNDING_COMPENSATION
                 };
 
-                let refraction_origin =
-                    *ray_origin + (ray_direction * (distance + rounding_error_compensation));
+                let refraction_origin = *ray_origin
+                    + (ray_direction * (intersection.distance + rounding_error_compensation));
                 refraction_component = cast_ray(
                     &refraction_origin,
                     &refraction_direciton,

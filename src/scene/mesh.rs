@@ -1,4 +1,6 @@
 use super::triangle::Triangle;
+
+use crate::ray_tracing::Intersection;
 use crate::vector_math::Vec3;
 
 #[derive(Debug, PartialEq)]
@@ -15,18 +17,29 @@ impl Mesh {
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
-    ) -> Option<(f32, Vec3)> {
+    ) -> Option<Intersection> {
         let mut closest_distance = f32::MAX;
         let mut closest_traingle = None;
+        let mut intersection_coords = None;
         for triangle in &self.triangles {
-            if let Some((distance, _)) = triangle.find_intersection(ray_origin, ray_direction) {
+            if let Some(Intersection {
+                distance,
+                local_coords,
+                ..
+            }) = triangle.find_intersection(ray_origin, ray_direction)
+            {
                 if distance < closest_distance {
                     closest_distance = distance;
                     closest_traingle = Some(triangle);
+                    intersection_coords = local_coords;
                 }
             }
         }
-        closest_traingle.map(|triangle| (closest_distance, triangle.normal()))
+        closest_traingle.map(|triangle| Intersection {
+            distance: closest_distance,
+            normal: triangle.normal(),
+            local_coords: intersection_coords,
+        })
     }
 
     pub fn from_obj_file(file_name: &str) -> Mesh {

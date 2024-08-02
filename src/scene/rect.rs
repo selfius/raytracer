@@ -1,4 +1,6 @@
 use super::triangle::Triangle;
+
+use crate::ray_tracing::Intersection;
 use crate::vector_math::Vec3;
 
 #[derive(Debug, PartialEq)]
@@ -21,10 +23,24 @@ impl Rect {
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
-    ) -> Option<(f32, Vec3)> {
-        let [half, another] = self.as_triangles();
-        half.find_intersection(ray_origin, ray_direction)
-            .or(another.find_intersection(ray_origin, ray_direction))
+    ) -> Option<Intersection> {
+        if let Some((x, y)) = self.find_intesection_coords(ray_origin, ray_direction) {
+            let [a, b, _, d] = self.as_vertices();
+            let intersection_point = a + (d - a) * x + (b - a) * y;
+            if (intersection_point - *ray_origin) * *ray_direction > 0.0 {
+                return Some(Intersection {
+                    distance: (intersection_point - *ray_origin).magnitude(),
+                    normal: self
+                        .as_triangles()
+                        .iter()
+                        .next()
+                        .map(|triangle| triangle.normal())
+                        .unwrap(),
+                    local_coords: Some((x, y)),
+                });
+            }
+        }
+        None
     }
 
     pub fn find_intesection_coords(
@@ -56,6 +72,13 @@ impl Rect {
             _ => panic!("rectangle must consist of two triangles"),
         }
     }
+
+    fn as_vertices(&self) -> [Vec3; 4] {
+        let [half, another] = self.as_triangles();
+        let [a, _, b] = half.as_vertices();
+        let [c, _, d] = another.as_vertices();
+        [a, b, c, d]
+    }
 }
 
 #[cfg(test)]
@@ -67,15 +90,44 @@ mod test {
     fn ray_intersects_rect() {
         let rect = Rect::new(
             Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(1.0, 0.0, 0.0),
-            Vec3::new(1.0, 1.0, 0.0),
             Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(1.0, 1.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
         );
 
         let intersection =
             rect.find_intersection(&Vec3::new(0.5, 0.5, 1.0), &Vec3::new(0.0, 0.0, -2.0));
 
-        assert_eq!(Some((1.0, Vec3::new(0.0, 0.0, -1.0))), intersection);
+        assert_eq!(
+            Some(Intersection {
+                distance: 1.0,
+                normal: Vec3::new(0.0, -0.0, 1.0),
+                local_coords: Some((0.5, 0.5))
+            }),
+            intersection
+        );
+    }
+
+    #[test]
+    fn ray_intersect_scaled_rect() {
+        let rect = Rect::new(
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(1.0, 2.0, 0.0),
+            Vec3::new(3.0, 2.0, 0.0),
+            Vec3::new(3.0, 0.0, 0.0),
+        );
+
+        let intersection =
+            rect.find_intersection(&Vec3::new(1.0, 1.0, 1.0), &Vec3::new(0.0, 0.0, -2.0));
+
+        assert_eq!(
+            Some(Intersection {
+                distance: 1.0,
+                normal: Vec3::new(0.0, 0.0, 1.0),
+                local_coords: Some((0.0, 0.5))
+            }),
+            intersection
+        );
     }
 
     #[test]

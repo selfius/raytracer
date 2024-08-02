@@ -6,6 +6,8 @@ mod triangle;
 use crate::buffer::Rgb;
 use crate::vector_math::Vec3;
 
+use crate::ray_tracing::Intersection;
+
 use mesh::Mesh;
 use rect::Rect;
 use sphere::Sphere;
@@ -55,11 +57,11 @@ pub fn create_scene() -> Scene {
             },
             Object {
                 surface: Surface::Rect(Rect::new(
-                    Vec3::new(-1.0,-2.0,-5.0),
-                    Vec3::new(-1.0,-2.0,-9.0),
-                    Vec3::new(3.0,-2.0,-9.0),
-                    Vec3::new(3.0,-2.0,-5.0),
-                    )),
+                    Vec3::new(-1.0, -2.0, -5.0),
+                    Vec3::new(-1.0, -2.0, -9.0),
+                    Vec3::new(3.0, -2.0, -9.0),
+                    Vec3::new(3.0, -2.0, -5.0),
+                )),
                 material: &GLOSSY_GREEN,
             },
         ],
@@ -94,7 +96,7 @@ impl Surface {
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
-    ) -> Option<(f32, Vec3)> {
+    ) -> Option<Intersection> {
         match self {
             Self::Sphere(sphere) => sphere.find_intersection(ray_origin, ray_direction),
             Self::Triangle(triangle) => triangle.find_intersection(ray_origin, ray_direction),
@@ -117,6 +119,7 @@ pub struct Material {
     pub albedo: (f32, f32, f32, f32), // diffuse, specular, reflection
     pub refractive_index: f32,
 }
+
 pub struct Light {
     pub origin: Vec3,
     pub intensity: f32,

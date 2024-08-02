@@ -1,4 +1,6 @@
 use crate::vector_math::Vec3;
+use crate::ray_tracing::Intersection;
+
 
 #[derive(Debug, PartialEq)]
 pub struct Triangle {
@@ -61,13 +63,17 @@ impl Triangle {
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
-    ) -> Option<(f32, Vec3)> {
+    ) -> Option<Intersection> {
         let [a, b, c] = self.as_vertices();
         if let Some((u, v)) = self.find_barycentric_intersection(ray_origin, ray_direction) {
             let point_on_triangle = a + (b - a) * u + (c - a) * v;
             let ray_origin_to_intersection = point_on_triangle - *ray_origin;
             if ray_origin_to_intersection * *ray_direction > 0.0 {
-                return Some(((point_on_triangle - *ray_origin).magnitude(), self.normal));
+                return Some(Intersection {
+                    distance: (point_on_triangle - *ray_origin).magnitude(),
+                    normal: self.normal,
+                    local_coords: None,
+                });
             }
         }
         None
@@ -110,7 +116,14 @@ mod test {
         let intersection =
             triangle.find_intersection(&Vec3::new(0.5, 0.5, 1.0), &Vec3::new(0.0, 0.0, -2.0));
 
-        assert_eq!(Some((1.0, Vec3::new(0.0, 0.0, 1.0))), intersection);
+        assert_eq!(
+            Some(Intersection {
+                distance: 1.0,
+                normal: Vec3::new(0.0, 0.0, 1.0),
+                local_coords: None
+            }),
+            intersection
+        );
     }
 
     #[test]
@@ -124,7 +137,14 @@ mod test {
         let intersection =
             triangle.find_intersection(&Vec3::new(0.5, 0.5, -2.0), &Vec3::new(0.0, 0.0, 1.0));
 
-        assert_eq!(Some((2.0, Vec3::new(0.0, 0.0, 1.0))), intersection);
+        assert_eq!(
+            Some(Intersection {
+                distance: 2.0,
+                normal: Vec3::new(0.0, 0.0, 1.0),
+                local_coords: None
+            }),
+            intersection
+        );
     }
 
     #[test]
