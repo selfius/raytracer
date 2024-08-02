@@ -17,31 +17,51 @@ impl Rect {
         }
     }
 
-    pub fn normal(&self) -> Vec3 {
-        self.triangles
-            .iter()
-            .next()
-            .map(Triangle::normal)
-            .expect("Rect must consist of two triangles")
-    }
-
     pub fn find_intersection(
         &self,
         ray_origin: &Vec3,
         ray_direction: &Vec3,
     ) -> Option<(f32, Vec3)> {
-        if let [half, another] = &self.triangles[..] {
-            return half
-                .find_intersection(ray_origin, ray_direction)
-                .or(another.find_intersection(ray_origin, ray_direction));
+        let [half, another] = self.as_triangles();
+        half.find_intersection(ray_origin, ray_direction)
+            .or(another.find_intersection(ray_origin, ray_direction))
+    }
+
+    pub fn find_intesection_coords(
+        &self,
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+    ) -> Option<(f32, f32)> {
+        let [half, another] = self.as_triangles();
+        half.find_barycentric_intersection(ray_origin, ray_direction)
+            .map(|(u, v)| Vec3::new(1.0, 1.0, 0.0) * u + Vec3::new(0.0, 1.0, 0.0) * v)
+            .or(another
+                .find_barycentric_intersection(ray_origin, ray_direction)
+                .map(|(u, v)| {
+                    Vec3::new(1.0, 1.0, 0.0)
+                        + Vec3::new(-1.0, -1.0, 0.0) * u
+                        + Vec3::new(0.0, -1.0, 0.0) * v
+                }))
+            .map(|vec| {
+                (
+                    vec * Vec3::new(1.0, 0.0, 0.0),
+                    vec * Vec3::new(0.0, 1.0, 0.0),
+                )
+            })
+    }
+
+    fn as_triangles(&self) -> [&Triangle; 2] {
+        match &self.triangles[..] {
+            [a, b] => [a, b],
+            _ => panic!("rectangle must consist of two triangles"),
         }
-        None
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common::test::*;
 
     #[test]
     fn ray_intersects_rect() {
@@ -55,6 +75,37 @@ mod test {
         let intersection =
             rect.find_intersection(&Vec3::new(0.5, 0.5, 1.0), &Vec3::new(0.0, 0.0, -2.0));
 
-        assert_eq!(Some((1.0, Vec3::new(0.0, 0.0, 1.0))), intersection);
+        assert_eq!(Some((1.0, Vec3::new(0.0, 0.0, -1.0))), intersection);
+    }
+
+    #[test]
+    fn ray_intersect_at_first_triangle_coords() {
+        let rect = Rect::new(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(1.0, 1.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
+        );
+
+        let intersection =
+            rect.find_intesection_coords(&Vec3::new(0.1, 0.9, 1.0), &Vec3::new(0.0, 0.0, -2.0));
+
+        assert_eq!(Some((0.1, 0.9)), intersection);
+    }
+
+    #[test]
+    fn ray_intersect_at_first_second_coords() {
+        let rect = Rect::new(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(1.0, 1.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
+        );
+
+        let intersection = rect
+            .find_intesection_coords(&Vec3::new(0.9, 0.1, 1.0), &Vec3::new(0.0, 0.0, -2.0))
+            .map(|(x, y)| (cap_float(x), cap_float(y)));
+
+        assert_eq!(Some((0.9, 0.1)), intersection);
     }
 }

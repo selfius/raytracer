@@ -30,10 +30,7 @@ impl Triangle {
             return None;
         }
 
-        let [a, b, c] = match self.vertices[..] {
-            [a, b, c] => [a, b, c],
-            _ => panic!("triangles have 3 vertices"),
-        };
+        let [a, b, c] = self.as_vertices();
 
         let e1 = b - a;
         let e2 = c - a;
@@ -65,10 +62,7 @@ impl Triangle {
         ray_origin: &Vec3,
         ray_direction: &Vec3,
     ) -> Option<(f32, Vec3)> {
-        let [a, b, c] = match self.vertices[..] {
-            [a, b, c] => [a, b, c],
-            _ => panic!("triangles have 3 vertices"),
-        };
+        let [a, b, c] = self.as_vertices();
         if let Some((u, v)) = self.find_barycentric_intersection(ray_origin, ray_direction) {
             let point_on_triangle = a + (b - a) * u + (c - a) * v;
             let ray_origin_to_intersection = point_on_triangle - *ray_origin;
@@ -77,6 +71,13 @@ impl Triangle {
             }
         }
         None
+    }
+
+    pub fn as_vertices(&self) -> [Vec3; 3] {
+        match self.vertices[..] {
+            [a, b, c] => [a, b, c],
+            _ => panic!("triangles have 3 vertices"),
+        }
     }
 }
 

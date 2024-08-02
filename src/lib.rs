@@ -1,4 +1,5 @@
 pub mod buffer;
+mod common;
 mod ray_tracing;
 mod scene;
 mod vector_math;

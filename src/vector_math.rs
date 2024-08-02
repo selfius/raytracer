@@ -99,6 +99,7 @@ impl Vec3 {
 #[cfg(test)]
 mod test {
     use super::Vec3;
+    use crate::common::test::*;
 
     #[test]
     fn addition() {
@@ -168,7 +169,4 @@ mod test {
         assert_eq!(cross_product, Vec3::new(0.0, 0.0, 1.0));
     }
 
-    fn cap_float(value: f32) -> f32 {
-        (value * 10.0).round() / 10.0
-    }
 }
