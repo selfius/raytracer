@@ -4,6 +4,9 @@ mod ray_tracing;
 mod scene;
 mod vector_math;
 
+use std::sync::{mpsc, Arc};
+use threadpool::ThreadPool;
+
 use scene::{Object, Scene};
 
 use crate::buffer::{Buffer, Point, Rgb};
@@ -12,6 +15,7 @@ use crate::vector_math::Vec3;
 pub const WIDTH: u32 = 1024;
 pub const HEIGHT: u32 = 768;
 pub const CHANNELS: u8 = 3;
+pub const THREADS: usize = 16;
 
 const HORIZONTAL_FOV: f32 = 90.0;
 
@@ -21,7 +25,10 @@ pub fn draw(buffer: &mut Buffer) {
     let (in_world_top_left, in_world_pixel_x_offset, in_world_pixel_y_offset) =
         set_up_3d_world(camera_position, looking_direction);
 
-    let scene = scene::create_scene();
+    let scene = Arc::new(scene::create_scene());
+
+    let pool = ThreadPool::new(THREADS);
+    let (tx, rx) = mpsc::channel();
 
     for x in 0..WIDTH {
         for y in 0..HEIGHT {
@@ -32,17 +39,27 @@ pub fn draw(buffer: &mut Buffer) {
                 + in_world_top_left
                 - camera_position;
 
-            buffer.set(
-                &Point(x, y),
-                &cast_ray(
-                    &camera_position,
-                    &camera_to_pixel_direction,
-                    &scene,
-                    0,
-                    None,
-                ),
-            );
+            let tx = tx.clone();
+            let scene = Arc::clone(&scene);
+
+            pool.execute(move || {
+                tx.send((
+                    x,
+                    y,
+                    cast_ray(
+                        &camera_position,
+                        &camera_to_pixel_direction,
+                        &scene,
+                        0,
+                        None,
+                    ),
+                )).unwrap();
+            });
         }
+    }
+    drop(tx);
+    for (x, y, color) in rx {
+        buffer.set(&Point(x, y), &color);
     }
 }
 
