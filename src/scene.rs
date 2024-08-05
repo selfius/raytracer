@@ -11,52 +11,51 @@ use crate::ray_tracing::Intersection;
 use mesh::Mesh;
 use rect::Rect;
 use sphere::Sphere;
-use triangle::Triangle;
 
 pub fn create_scene() -> Scene {
     Scene {
         objects: vec![
             Object {
-                surface: Surface::Sphere(Sphere {
+                surface: Box::new(Sphere {
                     origin: Vec3::new(1.7, 1.8, -10.0),
                     radius: 2.0,
                 }),
                 material: &RUBBERY_RED,
             },
             Object {
-                surface: Surface::Sphere(Sphere {
+                surface: Box::new(Sphere {
                     origin: Vec3::new(2.5, 0.8, -7.0),
                     radius: 1.0,
                 }),
                 material: &GLOSSY_GREEN,
             },
             Object {
-                surface: Surface::Sphere(Sphere {
+                surface: Box::new(Sphere {
                     origin: Vec3::new(-2.5, 0.2, -5.0),
                     radius: 1.0,
                 }),
                 material: &GLOSSY_BLUE,
             },
             Object {
-                surface: Surface::Sphere(Sphere {
+                surface: Box::new(Sphere {
                     origin: Vec3::new(4.5, 5.2, -11.0),
                     radius: 2.5,
                 }),
                 material: &MIRROR,
             },
             Object {
-                surface: Surface::Sphere(Sphere {
+                surface: Box::new(Sphere {
                     origin: Vec3::new(-1.2, -0.6, -4.0),
                     radius: 0.7,
                 }),
                 material: &GLASS,
             },
             Object {
-                surface: Surface::Mesh(Mesh::from_obj_file("cube.obj")),
+                surface: Box::new(Mesh::from_obj_file("cube.obj")),
                 material: &RUBBERY_RED,
             },
             Object {
-                surface: Surface::Rect(Rect::new(
+                surface: Box::new(Rect::new(
                     Vec3::new(-1.0, -2.0, -5.0),
                     Vec3::new(-1.0, -2.0, -9.0),
                     Vec3::new(3.0, -2.0, -9.0),
@@ -83,33 +82,13 @@ pub struct Scene {
     pub lights: Vec<Light>,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Surface {
-    Sphere(Sphere),
-    Triangle(Triangle),
-    Mesh(Mesh),
-    Rect(Rect),
+pub trait Surface {
+    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection>;
 }
 
-impl Surface {
-    pub fn find_intersection(
-        &self,
-        ray_origin: &Vec3,
-        ray_direction: &Vec3,
-    ) -> Option<Intersection> {
-        match self {
-            Self::Sphere(sphere) => sphere.find_intersection(ray_origin, ray_direction),
-            Self::Triangle(triangle) => triangle.find_intersection(ray_origin, ray_direction),
-            Self::Mesh(mesh) => mesh.find_intersection(ray_origin, ray_direction),
-            Self::Rect(rect) => rect.find_intersection(ray_origin, ray_direction),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
 pub struct Object {
     pub material: &'static Material,
-    pub surface: Surface,
+    pub surface: Box<dyn Surface + Send + Sync>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -1,5 +1,6 @@
 use crate::vector_math::Vec3;
 
+use super::Surface;
 use crate::ray_tracing::Intersection;
 
 #[derive(Debug, PartialEq)]
@@ -8,12 +9,8 @@ pub struct Sphere {
     pub radius: f32,
 }
 
-impl Sphere {
-    pub fn find_intersection(
-        &self,
-        ray_origin: &Vec3,
-        ray_direction: &Vec3,
-    ) -> Option<Intersection> {
+impl Surface for Sphere {
+    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection> {
         let ray_direction = ray_direction.normalize();
         let ray_origin_to_sphere = self.origin - *ray_origin;
         let center_to_ray_square = ray_origin_to_sphere.magnitude().powi(2)

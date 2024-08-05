@@ -57,7 +57,10 @@ mod rgb_test {
 
     #[test]
     fn rgb_addition() {
-        assert_eq!(Rgb::new(100, 10, 200) + Rgb::new(100, 10, 200), Rgb::new(200, 20, 255));
+        assert_eq!(
+            Rgb::new(100, 10, 200) + Rgb::new(100, 10, 200),
+            Rgb::new(200, 20, 255)
+        );
     }
 }
 

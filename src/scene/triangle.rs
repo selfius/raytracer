@@ -1,11 +1,29 @@
-use crate::vector_math::Vec3;
-use crate::ray_tracing::Intersection;
+use super::Surface;
 
+use crate::ray_tracing::Intersection;
+use crate::vector_math::Vec3;
 
 #[derive(Debug, PartialEq)]
 pub struct Triangle {
     vertices: Vec<Vec3>,
     normal: Vec3,
+}
+impl Surface for Triangle {
+    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection> {
+        let [a, b, c] = self.as_vertices();
+        if let Some((u, v)) = self.find_barycentric_intersection(ray_origin, ray_direction) {
+            let point_on_triangle = a + (b - a) * u + (c - a) * v;
+            let ray_origin_to_intersection = point_on_triangle - *ray_origin;
+            if ray_origin_to_intersection * *ray_direction > 0.0 {
+                return Some(Intersection {
+                    distance: (point_on_triangle - *ray_origin).magnitude(),
+                    normal: self.normal,
+                    local_coords: None,
+                });
+            }
+        }
+        None
+    }
 }
 
 impl Triangle {

@@ -4,6 +4,7 @@ mod ray_tracing;
 mod scene;
 mod vector_math;
 
+use std::ptr;
 use std::sync::{mpsc, Arc};
 use threadpool::ThreadPool;
 
@@ -53,7 +54,8 @@ pub fn draw(buffer: &mut Buffer) {
                         0,
                         None,
                     ),
-                )).unwrap();
+                ))
+                .unwrap();
             });
         }
     }
@@ -89,7 +91,7 @@ fn cast_ray(
                 &(point_on_object - light.origin),
                 &scene,
             ) {
-                if obstructing_object != object {
+                if !ptr::eq(obstructing_object, object) {
                     continue;
                 }
             }

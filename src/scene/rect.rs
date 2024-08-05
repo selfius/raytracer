@@ -1,4 +1,5 @@
 use super::triangle::Triangle;
+use super::Surface;
 
 use crate::ray_tracing::Intersection;
 use crate::vector_math::Vec3;
@@ -8,22 +9,8 @@ pub struct Rect {
     triangles: Vec<Triangle>,
 }
 
-impl Rect {
-    pub fn new(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> Rect {
-        let half = Triangle::new(a, c, b);
-        let another = Triangle::new(c, a, d);
-
-        assert!((half.normal() - another.normal()).magnitude() < f32::EPSILON);
-        Rect {
-            triangles: vec![half, another],
-        }
-    }
-
-    pub fn find_intersection(
-        &self,
-        ray_origin: &Vec3,
-        ray_direction: &Vec3,
-    ) -> Option<Intersection> {
+impl Surface for Rect {
+    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection> {
         if let Some((x, y)) = self.find_intesection_coords(ray_origin, ray_direction) {
             let [a, b, _, d] = self.as_vertices();
             let intersection_point = a + (d - a) * x + (b - a) * y;
@@ -41,6 +28,18 @@ impl Rect {
             }
         }
         None
+    }
+}
+
+impl Rect {
+    pub fn new(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> Rect {
+        let half = Triangle::new(a, c, b);
+        let another = Triangle::new(c, a, d);
+
+        assert!((half.normal() - another.normal()).magnitude() < f32::EPSILON);
+        Rect {
+            triangles: vec![half, another],
+        }
     }
 
     pub fn find_intesection_coords(

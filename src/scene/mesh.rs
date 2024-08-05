@@ -1,4 +1,5 @@
 use super::triangle::Triangle;
+use super::Surface;
 
 use crate::ray_tracing::Intersection;
 use crate::vector_math::Vec3;
@@ -8,16 +9,8 @@ pub struct Mesh {
     triangles: Vec<Triangle>,
 }
 
-impl Mesh {
-    pub fn new(triangles: Vec<Triangle>) -> Mesh {
-        Mesh { triangles }
-    }
-
-    pub fn find_intersection(
-        &self,
-        ray_origin: &Vec3,
-        ray_direction: &Vec3,
-    ) -> Option<Intersection> {
+impl Surface for Mesh {
+    fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection> {
         let mut closest_distance = f32::MAX;
         let mut closest_traingle = None;
         let mut intersection_coords = None;
@@ -40,6 +33,12 @@ impl Mesh {
             normal: triangle.normal(),
             local_coords: intersection_coords,
         })
+    }
+}
+
+impl Mesh {
+    pub fn new(triangles: Vec<Triangle>) -> Mesh {
+        Mesh { triangles }
     }
 
     pub fn from_obj_file(file_name: &str) -> Mesh {

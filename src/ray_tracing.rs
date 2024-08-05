@@ -45,21 +45,21 @@ mod tests {
         let scene = Scene {
             objects: vec![
                 Object {
-                    surface: Surface::Sphere(Sphere {
+                    surface: Box::new(Sphere {
                         origin: Vec3::new(3.0, 0.0, 0.0),
                         radius: 1.0,
                     }),
                     material: &RED,
                 },
                 Object {
-                    surface: Surface::Sphere(Sphere {
+                    surface: Box::new(Sphere {
                         origin: Vec3::new(4.0, 0.0, 0.0),
                         radius: 1.5,
                     }),
                     material: &BLACK,
                 },
                 Object {
-                    surface: Surface::Sphere(Sphere {
+                    surface:Box::new(Sphere {
                         origin: Vec3::new(-10.0, 0.0, 0.0),
                         radius: 1.5,
                     }),

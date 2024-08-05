@@ -168,5 +168,4 @@ mod test {
 
         assert_eq!(cross_product, Vec3::new(0.0, 0.0, 1.0));
     }
-
 }
