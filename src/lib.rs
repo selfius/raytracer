@@ -162,7 +162,11 @@ fn cast_ray(
             }
         }
 
-        return object.material.diffuse_color.clone()
+        return object
+            .material
+            .diffuse_color
+            .get(intersection.texture_coords)
+            .clone()
             * (diffuse_intensity * (object.material.albedo.0)).min(1.0)
             + SPEC_BASE_COLOR.clone() * (specular_intensity * object.material.albedo.1)
             + reflection_component

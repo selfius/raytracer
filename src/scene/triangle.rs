@@ -18,7 +18,7 @@ impl Surface for Triangle {
                 return Some(Intersection {
                     distance: (point_on_triangle - *ray_origin).magnitude(),
                     normal: self.normal,
-                    local_coords: None,
+                    texture_coords: None,
                 });
             }
         }
@@ -90,7 +90,7 @@ impl Triangle {
                 return Some(Intersection {
                     distance: (point_on_triangle - *ray_origin).magnitude(),
                     normal: self.normal,
-                    local_coords: None,
+                    texture_coords: None,
                 });
             }
         }
@@ -138,7 +138,7 @@ mod test {
             Some(Intersection {
                 distance: 1.0,
                 normal: Vec3::new(0.0, 0.0, 1.0),
-                local_coords: None
+                texture_coords: None
             }),
             intersection
         );
@@ -159,7 +159,7 @@ mod test {
             Some(Intersection {
                 distance: 2.0,
                 normal: Vec3::new(0.0, 0.0, 1.0),
-                local_coords: None
+                texture_coords: None
             }),
             intersection
         );

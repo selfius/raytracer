@@ -23,7 +23,7 @@ impl Surface for Rect {
                         .next()
                         .map(|triangle| triangle.normal())
                         .unwrap(),
-                    local_coords: Some((x, y)),
+                    texture_coords: Some((x, y)),
                 });
             }
         }
@@ -101,7 +101,7 @@ mod test {
             Some(Intersection {
                 distance: 1.0,
                 normal: Vec3::new(0.0, -0.0, 1.0),
-                local_coords: Some((0.5, 0.5))
+                texture_coords: Some((0.5, 0.5))
             }),
             intersection
         );
@@ -123,7 +123,7 @@ mod test {
             Some(Intersection {
                 distance: 1.0,
                 normal: Vec3::new(0.0, 0.0, 1.0),
-                local_coords: Some((0.0, 0.5))
+                texture_coords: Some((0.0, 0.5))
             }),
             intersection
         );

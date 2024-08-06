@@ -31,14 +31,15 @@ pub fn scene_intersect<'a>(
 pub struct Intersection {
     pub distance: f32,
     pub normal: Vec3,
-    pub local_coords: Option<(f32, f32)>,
+    pub texture_coords: Option<(f32, f32)>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::buffer::Rgb;
-    use crate::scene::{sphere::Sphere, Material, Surface};
+    use crate::scene::{material::Materials, sphere::Sphere};
+    use std::ptr;
 
     #[test]
     fn scene_intersect_picks_closest() {
@@ -49,22 +50,21 @@ mod tests {
                         origin: Vec3::new(3.0, 0.0, 0.0),
                         radius: 1.0,
                     }),
-                    material: &RED,
+                    material: Materials::solid_color(RED),
                 },
                 Object {
                     surface: Box::new(Sphere {
                         origin: Vec3::new(4.0, 0.0, 0.0),
                         radius: 1.5,
                     }),
-                    material: &BLACK,
+                    material: Materials::solid_color(BLACK),
                 },
                 Object {
-                    surface:Box::new(Sphere {
+                    surface: Box::new(Sphere {
                         origin: Vec3::new(-10.0, 0.0, 0.0),
                         radius: 1.5,
                     }),
-
-                    material: &BLACK,
+                    material: Materials::solid_color(BLACK),
                 },
             ],
             lights: vec![],
@@ -73,23 +73,9 @@ mod tests {
         let intersection =
             scene_intersect(&Vec3::new(0.0, 0.0, 0.0), &Vec3::new(1.0, 0.0, 0.0), &scene);
 
-        assert_eq!(
-            intersection.unwrap().0.material.diffuse_color,
-            Rgb::new(255, 0, 0)
-        );
+        assert!(ptr::eq(intersection.unwrap().0, &scene.objects[0]));
     }
 
-    const RED: Material = Material {
-        diffuse_color: Rgb::new(255, 0, 0),
-        shininess: 0.0,
-        albedo: (0.5, 0.5, 0.0, 0.0),
-        refractive_index: 0.0,
-    };
-
-    const BLACK: Material = Material {
-        diffuse_color: Rgb::new(0, 0, 0),
-        shininess: 0.0,
-        albedo: (0.5, 0.5, 0.0, 0.0),
-        refractive_index: 0.0,
-    };
+    const RED: Rgb = Rgb::new(255, 0, 0);
+    const BLACK: Rgb = Rgb::new(0, 0, 0);
 }

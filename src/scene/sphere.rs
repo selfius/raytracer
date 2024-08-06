@@ -23,14 +23,14 @@ impl Surface for Sphere {
                 return Some(Intersection {
                     distance,
                     normal: ray_direction * distance + *ray_origin - self.origin,
-                    local_coords: None,
+                    texture_coords: None,
                 });
             } else if distance_to_intersection_with_ray + delta >= 0.0 {
                 let distance = distance_to_intersection_with_ray + delta;
                 return Some(Intersection {
                     distance,
                     normal: ray_direction * distance + *ray_origin - self.origin,
-                    local_coords: None,
+                    texture_coords: None,
                 });
             }
         }

@@ -17,21 +17,21 @@ impl Surface for Mesh {
         for triangle in &self.triangles {
             if let Some(Intersection {
                 distance,
-                local_coords,
+                texture_coords,
                 ..
             }) = triangle.find_intersection(ray_origin, ray_direction)
             {
                 if distance < closest_distance {
                     closest_distance = distance;
                     closest_traingle = Some(triangle);
-                    intersection_coords = local_coords;
+                    intersection_coords = texture_coords;
                 }
             }
         }
         closest_traingle.map(|triangle| Intersection {
             distance: closest_distance,
             normal: triangle.normal(),
-            local_coords: intersection_coords,
+            texture_coords: intersection_coords,
         })
     }
 }
