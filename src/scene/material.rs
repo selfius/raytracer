@@ -1,3 +1,5 @@
+use core::f32;
+
 use crate::buffer::Rgb;
 
 pub struct Material {
@@ -8,13 +10,42 @@ pub struct Material {
 }
 
 pub trait ValueGenerator<U> {
-    fn get(&self, texture_coords: Option<(f32, f32)>) -> &U;
+    fn get(&self, texture_coords: Option<(f32, f32)>) -> U;
 }
 
 struct SolidColor(Rgb);
 impl ValueGenerator<Rgb> for SolidColor {
-    fn get(&self, _: Option<(f32, f32)>) -> &Rgb {
-        &self.0
+    fn get(&self, _: Option<(f32, f32)>) -> Rgb {
+        self.0.clone()
+    }
+}
+
+const DEBUG_PINK: Rgb = Rgb::new(200, 50, 200);
+
+struct CheckerBoard(Rgb, Rgb);
+
+const CHECKER_BOARD_ROWS: u8 = 8;
+
+impl ValueGenerator<Rgb> for CheckerBoard {
+    fn get(&self, texture_coords: Option<(f32, f32)>) -> Rgb {
+        let light_color = &self.0;
+        let dark_color = &self.1;
+        if let Some((x, y)) = texture_coords {
+            let x = f32::min(1.0 - f32::EPSILON, x);
+            let y = f32::min(1.0 - f32::EPSILON, y);
+
+            let x = (x * (CHECKER_BOARD_ROWS as f32)) as u8;
+            let y = (y * (CHECKER_BOARD_ROWS as f32)) as u8;
+            //todo how should we do this to get rid of this awfull noise?
+
+            return if (x + y) % 2 == 0 {
+                light_color.clone()
+            } else {
+                dark_color.clone()
+            };
+            // return Rgb::new((255.0 * x) as u8, (255.0 * y) as u8, 0);
+        }
+        DEBUG_PINK.clone()
     }
 }
 
@@ -26,6 +57,15 @@ impl Materials {
             diffuse_color: Box::new(SolidColor(color)),
             shininess: 0.0,
             albedo: (0.5, 0.5, 0.0, 0.0),
+            refractive_index: 0.0,
+        }
+    }
+
+    pub fn checker_board() -> Material {
+        Material {
+            diffuse_color: Box::new(CheckerBoard(Rgb::new(179, 118, 62), Rgb::new(67, 45, 35))),
+            shininess: 50.0,
+            albedo: (0.8, 0.6, 0.1, 0.0),
             refractive_index: 0.0,
         }
     }

@@ -62,7 +62,7 @@ pub fn create_scene() -> Scene {
                     Vec3::new(3.0, -2.0, -9.0),
                     Vec3::new(3.0, -2.0, -5.0),
                 )),
-                material: Materials::glossy_green(),
+                material: Materials::checker_board(),
             },
         ],
         lights: vec![
