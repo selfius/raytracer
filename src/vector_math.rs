@@ -52,7 +52,7 @@ impl Neg for Vec3 {
 }
 
 impl Vec3 {
-    pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
+    pub const fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3 { values: [x, y, z] }
     }
 

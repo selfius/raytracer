@@ -21,7 +21,8 @@ pub fn create_scene() -> Scene {
                     origin: Vec3::new(1.7, 1.8, -10.0),
                     radius: 2.0,
                 }),
-                material: Materials::rubbery_red(),
+                // material: Materials::y_gradient(),
+                material: Materials::rubbery_red_checker_board(),
             },
             Object {
                 surface: Box::new(Sphere {

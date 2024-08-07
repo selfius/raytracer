@@ -9,6 +9,22 @@ pub struct Sphere {
     pub radius: f32,
 }
 
+fn get_texture_coords(origin: &Vec3, point_on_sphere: &Vec3) -> (f32, f32) {
+    let origin_to_point = (*point_on_sphere - *origin).normalize();
+    const X0: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
+    const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
+    let mut x = (origin_to_point * X0 * -1.0 + 1.0) / 4.0; //mapping cos to 0..0.5 from 1..-1
+    if origin_to_point * FORWARD < 0.0 {
+        x = 1.0 - x;
+    }
+
+    const UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
+    let y = (origin_to_point * UP * -1.0 + 1.0) / 2.0; //mapping to 0..1 from 1..-1
+    (x, y)
+}
+
+impl Sphere {}
+
 impl Surface for Sphere {
     fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection> {
         let ray_direction = ray_direction.normalize();
@@ -20,17 +36,19 @@ impl Surface for Sphere {
             let delta = (self.radius.powi(2) - center_to_ray_square).sqrt();
             if distance_to_intersection_with_ray - delta >= 0.0 {
                 let distance = distance_to_intersection_with_ray - delta;
+                let point_on_sphere = *ray_origin + (ray_direction * distance);
                 return Some(Intersection {
                     distance,
-                    normal: ray_direction * distance + *ray_origin - self.origin,
-                    texture_coords: None,
+                    normal: point_on_sphere - self.origin,
+                    texture_coords: Some(get_texture_coords(&self.origin, &point_on_sphere)),
                 });
             } else if distance_to_intersection_with_ray + delta >= 0.0 {
                 let distance = distance_to_intersection_with_ray + delta;
+                let point_on_sphere = *ray_origin + (ray_direction * distance);
                 return Some(Intersection {
                     distance,
-                    normal: ray_direction * distance + *ray_origin - self.origin,
-                    texture_coords: None,
+                    normal: point_on_sphere - self.origin,
+                    texture_coords: Some(get_texture_coords(&self.origin, &point_on_sphere)),
                 });
             }
         }

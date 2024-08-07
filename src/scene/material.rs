@@ -36,14 +36,12 @@ impl ValueGenerator<Rgb> for CheckerBoard {
 
             let x = (x * (CHECKER_BOARD_ROWS as f32)) as u8;
             let y = (y * (CHECKER_BOARD_ROWS as f32)) as u8;
-            //todo how should we do this to get rid of this awfull noise?
 
             return if (x + y) % 2 == 0 {
                 light_color.clone()
             } else {
                 dark_color.clone()
             };
-            // return Rgb::new((255.0 * x) as u8, (255.0 * y) as u8, 0);
         }
         DEBUG_PINK.clone()
     }
@@ -66,6 +64,15 @@ impl Materials {
             diffuse_color: Box::new(CheckerBoard(Rgb::new(179, 118, 62), Rgb::new(67, 45, 35))),
             shininess: 50.0,
             albedo: (0.8, 0.6, 0.1, 0.0),
+            refractive_index: 0.0,
+        }
+    }
+
+    pub fn rubbery_red_checker_board() -> Material {
+        Material {
+            diffuse_color: Box::new(CheckerBoard(Rgb::new(190, 30, 30), Rgb::new(230, 30, 30))),
+            shininess: 10.0,
+            albedo: (0.9, 0.1, 0.0, 0.0),
             refractive_index: 0.0,
         }
     }
