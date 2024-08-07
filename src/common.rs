@@ -1,3 +1,7 @@
+use crate::buffer::Rgb;
+
+pub const DEBUG_PINK: Rgb = Rgb::new(200, 50, 200);
+
 #[cfg(test)]
 pub mod test {
 
@@ -5,3 +9,4 @@ pub mod test {
         (value * 10.0).round() / 10.0
     }
 }
+

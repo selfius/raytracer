@@ -4,11 +4,14 @@ mod ray_tracing;
 mod scene;
 mod vector_math;
 
+use common::DEBUG_PINK;
+use ray_tracing::Intersection;
+use scene::sphere::Sphere;
 use std::ptr;
 use std::sync::{mpsc, Arc};
 use threadpool::ThreadPool;
 
-use scene::{Object, Scene};
+use scene::{Object, Scene, Surface};
 
 use crate::buffer::{Buffer, Point, Rgb};
 use crate::vector_math::Vec3;
@@ -172,7 +175,21 @@ fn cast_ray(
             + reflection_component
             + refraction_component;
     }
-    BACKGROUND_COLOR
+    get_sky_color(ray_direction, scene)
+}
+
+fn get_sky_color(ray_direction: &Vec3, scene: &Scene) -> Rgb {
+    const SKY_SPHERE: Sphere = Sphere {
+        origin: Vec3::new(0.0, 0.0, 0.0),
+        radius: 1.0,
+    };
+    const WORLD_ORIGIN: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+    if let Some(Intersection { texture_coords, .. }) =
+        SKY_SPHERE.find_intersection(&WORLD_ORIGIN, ray_direction)
+    {
+        return scene.sky_sphere.diffuse_color.get(texture_coords);
+    }
+    DEBUG_PINK
 }
 
 const BACKGROUND_COLOR: Rgb = Rgb::new(134, 75, 165);

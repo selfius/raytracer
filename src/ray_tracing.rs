@@ -68,6 +68,7 @@ mod tests {
                 },
             ],
             lights: vec![],
+            sky_sphere: Materials::solid_color(BLACK),
         };
 
         let intersection =

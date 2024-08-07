@@ -1,4 +1,6 @@
-use std::ops::{Add, Mul};
+use std::{
+    ops::{Add, Mul},
+};
 pub struct Point(pub u32, pub u32);
 
 pub struct Dimensions(pub u32, pub u32);
@@ -6,6 +8,7 @@ pub struct Dimensions(pub u32, pub u32);
 pub struct Buffer {
     data: Vec<u8>,
     width: u32,
+    height: u32,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -74,6 +77,7 @@ impl Buffer {
         Buffer {
             data,
             width: dimensions.0,
+            height: dimensions.1,
         }
     }
 
@@ -90,7 +94,28 @@ impl Buffer {
         self.data[first_byte + 2] = rgb.values[2];
     }
 
+    pub fn get(&self, point: &Point) -> Rgb {
+        let first_byte = ((point.1 * self.width + point.0) * 3) as usize;
+        Rgb::new(
+            self.data[first_byte],
+            self.data[first_byte + 1],
+            self.data[first_byte + 2],
+        )
+    }
+
+    pub fn set_raw_value(&mut self, idx: usize, value: u8) {
+        self.data[idx] = value;
+    }
+
     pub fn get_data_ref(&self) -> &[u8] {
         self.data.as_slice()
+    }
+
+    pub fn width(&self) -> &u32 {
+        &self.width
+    }
+
+    pub fn height(&self) -> &u32 {
+        &self.height
     }
 }

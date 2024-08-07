@@ -21,7 +21,6 @@ pub fn create_scene() -> Scene {
                     origin: Vec3::new(1.7, 1.8, -10.0),
                     radius: 2.0,
                 }),
-                // material: Materials::y_gradient(),
                 material: Materials::rubbery_red_checker_board(),
             },
             Object {
@@ -76,12 +75,14 @@ pub fn create_scene() -> Scene {
                 intensity: 0.8,
             },
         ],
+        sky_sphere: Materials::skysphere(),
     }
 }
 
 pub struct Scene {
     pub objects: Vec<Object>,
     pub lights: Vec<Light>,
+    pub sky_sphere: Material,
 }
 
 pub trait Surface {
