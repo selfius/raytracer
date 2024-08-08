@@ -1,3 +1,5 @@
+use core::f32;
+
 use crate::vector_math::Vec3;
 
 use super::Surface;
@@ -11,12 +13,20 @@ pub struct Sphere {
 
 fn get_texture_coords(origin: &Vec3, point_on_sphere: &Vec3) -> (f32, f32) {
     let origin_to_point = (*point_on_sphere - *origin).normalize();
-    const X0: Vec3 = Vec3::new(-1.0, 0.0, 0.0);
-    const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
-    let mut x = (origin_to_point * X0 * -1.0 + 1.0) / 4.0; //mapping cos to 0..0.5 from 1..-1
-    if origin_to_point * FORWARD < 0.0 {
-        x = 1.0 - x;
-    }
+    const X: Vec3 = Vec3::new(1.0, 0.0, 0.0);
+    const Z: Vec3 = Vec3::new(0.0, 0.0, 1.0);
+    let x = origin_to_point * X;
+    let z = origin_to_point * Z;
+    let x = if x == 0.0 && z == 0.0 {
+        0.0
+    } else {
+        let xz = Vec3::new(x, 0.0, z).normalize();
+        let mut x = ((xz * X + 1.0) - f32::EPSILON) / 4.0; //mapping to 0..0.5 from 1..-1
+        if xz * Z < 0.0 {
+            x = 1.0 - x;
+        }
+        x
+    };
 
     const UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
     let y = (origin_to_point * UP * -1.0 + 1.0) / 2.0; //mapping to 0..1 from 1..-1
@@ -59,6 +69,7 @@ impl Surface for Sphere {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common::test::*;
 
     #[test]
     fn ray_intersects_test() {
@@ -98,5 +109,22 @@ mod test {
             .unwrap();
 
         assert_eq!(distance, 1.0);
+    }
+
+    const ORIGIN: Vec3 = Vec3::new(0.0, 0.0, 0.0);
+
+    #[test]
+    fn texture_coord_top_left() {
+        let coords = get_texture_coords(&ORIGIN, &Vec3::new(0.0, 1.0, 0.0));
+
+        assert_eq!((0.0, 0.0), coords);
+    }
+
+    #[test]
+    fn texture_coord_bottom_right() {
+        let point_on_sphere = Vec3::new(-0.1, -1.0, -0.001).normalize();
+        let (x, y) = get_texture_coords(&ORIGIN, &point_on_sphere);
+
+        assert_eq!((1.0, 1.0), (cap_float(x), cap_float(y)));
     }
 }
