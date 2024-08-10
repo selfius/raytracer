@@ -113,14 +113,10 @@ fn cast_ray(
             if object.material.albedo.2 > 0.0 {
                 let reflection_direction = -ray_direction.reflection(&normal);
 
-                let rounding_error_compensation = if reflection_direction * normal > 0.0 {
-                    -ROUNDING_COMPENSATION
-                } else {
-                    ROUNDING_COMPENSATION
-                };
+                let reflection_origin = *ray_origin + (ray_direction * intersection.distance);
 
-                let reflection_origin = *ray_origin
-                    + (ray_direction * (intersection.distance + rounding_error_compensation));
+                let reflection_origin = object.surface.approximate_outside(reflection_origin);
+
                 reflection_component = cast_ray(
                     &reflection_origin,
                     &reflection_direction,
@@ -137,24 +133,21 @@ fn cast_ray(
 
                 let normal = normal * current_medium.map_or(1.0, |_| -1.0);
 
-                let get_reflective_index_from_sphere =
-                    |sphere: &Object| sphere.material.refractive_index;
+                let get_reflective_index = |object: &Object| object.material.refractive_index;
 
-                let current_index = current_medium.map_or(1.0, get_reflective_index_from_sphere);
-                let next_index =
-                    next_refraction_medium.map_or(1.0, get_reflective_index_from_sphere);
+                let current_index = current_medium.map_or(1.0, get_reflective_index);
+                let next_index = next_refraction_medium.map_or(1.0, get_reflective_index);
 
                 let refraction_direciton =
                     ray_direction.refraction(&normal, current_index, next_index);
 
-                let rounding_error_compensation = if refraction_direciton * normal > 0.0 {
-                    -ROUNDING_COMPENSATION
-                } else {
-                    ROUNDING_COMPENSATION
+                let refraction_origin = *ray_origin + (ray_direction * (intersection.distance));
+
+                let refraction_origin = match current_medium {
+                    Some(object) => object.surface.approximate_outside(refraction_origin),
+                    None => object.surface.approximate_inside(refraction_origin),
                 };
 
-                let refraction_origin = *ray_origin
-                    + (ray_direction * (intersection.distance + rounding_error_compensation));
                 refraction_component = cast_ray(
                     &refraction_origin,
                     &refraction_direciton,
@@ -192,13 +185,9 @@ fn get_sky_color(ray_direction: &Vec3, scene: &Scene) -> Rgb {
     DEBUG_PINK
 }
 
-const BACKGROUND_COLOR: Rgb = Rgb::new(134, 75, 165);
-
 const SPEC_BASE_COLOR: Rgb = Rgb::new(255, 255, 255);
 
 const BOUNCE_LIMIT: u8 = 4;
-
-const ROUNDING_COMPENSATION: f32 = 0.01;
 
 fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
     // TODO: we should take into account looking direction to calculate virtual screen placement

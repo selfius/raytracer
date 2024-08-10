@@ -1,6 +1,4 @@
-use std::{
-    ops::{Add, Mul},
-};
+use std::ops::{Add, Mul};
 pub struct Point(pub u32, pub u32);
 
 pub struct Dimensions(pub u32, pub u32);

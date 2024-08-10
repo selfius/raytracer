@@ -87,6 +87,14 @@ pub struct Scene {
 
 pub trait Surface {
     fn find_intersection(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Option<Intersection>;
+
+    fn approximate_inside(&self, point_on_surface: Vec3) -> Vec3 {
+        point_on_surface
+    }
+
+    fn approximate_outside(&self, point_on_surface: Vec3) -> Vec3 {
+        point_on_surface
+    }
 }
 
 pub struct Object {

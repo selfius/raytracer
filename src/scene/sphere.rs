@@ -64,7 +64,23 @@ impl Surface for Sphere {
         }
         Option::None
     }
+
+    fn approximate_inside(&self, point_on_surface: Vec3) -> Vec3 {
+        let origin_to_point = point_on_surface - self.origin;
+
+        let next_down = f32::from_bits(self.radius.to_bits() - LAST_PLACE_UNIT_ERROR_MARGIN);
+        self.origin + (origin_to_point.normalize() * next_down)
+    }
+
+    fn approximate_outside(&self, point_on_surface: Vec3) -> Vec3 {
+        let origin_to_point = point_on_surface - self.origin;
+
+        let next_up = f32::from_bits(self.radius.to_bits() + LAST_PLACE_UNIT_ERROR_MARGIN);
+        self.origin + (origin_to_point.normalize() * next_up)
+    }
 }
+
+const LAST_PLACE_UNIT_ERROR_MARGIN: u32 = 8;
 
 #[cfg(test)]
 mod test {

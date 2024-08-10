@@ -9,4 +9,3 @@ pub mod test {
         (value * 10.0).round() / 10.0
     }
 }
-

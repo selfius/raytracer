@@ -23,7 +23,6 @@ impl ValueGenerator<Rgb> for SolidColor {
     }
 }
 
-
 struct CheckerBoard(Rgb, Rgb);
 
 const CHECKER_BOARD_ROWS: u8 = 8;

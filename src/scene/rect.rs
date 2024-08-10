@@ -29,6 +29,10 @@ impl Surface for Rect {
         }
         None
     }
+
+    fn approximate_outside(&self, point_on_surface: Vec3) -> Vec3 {
+        point_on_surface + (self.as_triangles()[0].normal() * 1e-6)
+    }
 }
 
 impl Rect {
