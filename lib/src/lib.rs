@@ -189,9 +189,7 @@ const SPEC_BASE_COLOR: Rgb = Rgb::new(255, 255, 255);
 
 const BOUNCE_LIMIT: u8 = 4;
 
-fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
-    // TODO: we should take into account looking direction to calculate virtual screen placement
-    // and x- and y- offsets. For the time being we assume this direction to be (0,0, -1)
+fn set_up_3d_world(camera_position: Vec3, looking_direction: Vec3) -> (Vec3, Vec3, Vec3) {
     let vertical_fov = (HEIGHT as f32 * (HORIZONTAL_FOV / 2.0).to_radians().tan() / WIDTH as f32)
         .atan()
         .to_degrees()
@@ -201,17 +199,21 @@ fn set_up_3d_world(camera_position: Vec3, _looking_direction: Vec3) -> (Vec3, Ve
     let in_world_screen_width = 2.0 * (HORIZONTAL_FOV / 2.0).to_radians().tan();
     let in_world_screen_height = 2.0 * (vertical_fov / 2.0).to_radians().tan();
 
+    let camera_z = -looking_direction.normalize();
+
+    let looking_direction = looking_direction.as_coords();
+    let camera_x = Vec3::new(-looking_direction.2, 0.0, looking_direction.0).normalize();
+    let camera_y = camera_z.cross_product(&camera_x);
+
     // size of a pixel in the output translated to world coordinates
-    let in_world_pixel_x_offset = Vec3::new(in_world_screen_width / (WIDTH as f32), 0.0, 0.0);
-    let in_world_pixel_y_offset = Vec3::new(0.0, -in_world_screen_height / (HEIGHT as f32), 0.0);
+    let in_world_pixel_x_offset = camera_x * (in_world_screen_width / (WIDTH as f32));
+    let in_world_pixel_y_offset = camera_y * (-in_world_screen_height / (HEIGHT as f32));
 
     // top left of the virtual screen
-    let in_world_top_left = camera_position
-        + Vec3::new(
-            -in_world_screen_width / 2.0,
-            in_world_screen_height / 2.0,
-            -1.0,
-        );
+    let in_world_top_left = camera_position - camera_x * (in_world_screen_width / 2.0)
+        + camera_y * (in_world_screen_height / 2.0)
+        - camera_z;
+
     (
         in_world_top_left,
         in_world_pixel_x_offset,

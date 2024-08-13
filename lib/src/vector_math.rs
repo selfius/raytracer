@@ -56,6 +56,12 @@ impl Vec3 {
         Vec3 { values: [x, y, z] }
     }
 
+    pub fn as_coords(&self) -> (f32, f32, f32) {
+        match self.values {
+            [x, y, z] => (x, y, z),
+        }
+    }
+
     pub fn magnitude(&self) -> f32 {
         let mut result = 0.0;
         for i in self.values {
