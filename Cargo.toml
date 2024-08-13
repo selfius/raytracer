@@ -1,9 +1,4 @@
-[package]
-name = "raytracer"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [ "image_gen","lib"]
 
-[dependencies]
-png = "0.17.13"
-threadpool = "1.8.1"
-tobj = "4.0.2"

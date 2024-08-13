@@ -79,6 +79,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d231dfb89cfffdbc30e7fc41579ed6066ad03abda9e567ccafae602b97ec5024"
 
 [[package]]
+name = "image_gen"
+version = "0.1.0"
+dependencies = [
+ "lib",
+ "png",
+]
+
+[[package]]
+name = "lib"
+version = "0.1.0"
+dependencies = [
+ "png",
+ "threadpool",
+ "tobj",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.155"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -139,15 +156,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
-]
-
-[[package]]
-name = "raytracer"
-version = "0.1.0"
-dependencies = [
- "png",
- "threadpool",
- "tobj",
 ]
 
 [[package]]

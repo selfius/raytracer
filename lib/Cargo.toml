@@ -1,0 +1,9 @@
+[package]
+name = "lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+png = "0.17.13"
+threadpool = "1.8.1"
+tobj = "4.0.2"
