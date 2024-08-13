@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
-members = [ "image_gen","lib"]
+members = [ "image_gen","lib", "video_gen"]
 

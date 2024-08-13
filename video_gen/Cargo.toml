@@ -1,0 +1,8 @@
+[package]
+name = "video_gen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ndarray = "0.15.6"
+video-rs = { version = "0.8", features = ["ndarray"] }
