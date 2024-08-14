@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+lib = { path = "../lib"}
 ndarray = "0.15.6"
 video-rs = { version = "0.8", features = ["ndarray"] }

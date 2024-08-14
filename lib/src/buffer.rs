@@ -18,6 +18,12 @@ impl Rgb {
     pub const fn new(r: u8, g: u8, b: u8) -> Rgb {
         Rgb { values: [r, g, b] }
     }
+
+    pub fn as_bites(&self) -> (u8, u8, u8) {
+        match self.values {
+            [r, g, b] => (r, g, b),
+        }
+    }
 }
 
 impl Mul<f32> for Rgb {

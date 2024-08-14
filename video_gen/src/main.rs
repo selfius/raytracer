@@ -5,18 +5,28 @@ use video_rs::time::Time;
 
 use std::path::Path;
 
+use lib::buffer::{Buffer, Dimensions, Point};
+use lib::vector_math::Vec3;
+
 fn main() {
     video_rs::init().unwrap();
 
-    let settings = Settings::preset_h264_yuv420p(1280, 720, false);
+    let settings = Settings::preset_h264_yuv420p(lib::WIDTH as usize, lib::HEIGHT as usize, false);
     let mut encoder =
         Encoder::new(Path::new("output.mp4"), settings).expect("failed to create encoder");
 
     let duration: Time = Time::from_nth_of_a_second(24);
     let mut position = Time::zero();
-    for i in 0..256 {
-        // This will create a smooth rainbow animation video!
-        let frame = gradient(i as f32 / 256.0);
+    let look_at = Vec3::new(0.0, 1.0, -7.5);
+    let mut angle = 90.0_f32;
+    for _i in 0..180 {
+        angle += 2.0;
+        let (x, z) = (
+            f32::cos(angle.to_radians()) * 8.0,
+            f32::sin(angle.to_radians()) * 8.0,
+        );
+        let camera_position = Vec3::new(x, 1.0, z);
+        let frame = generate_frame(look_at + camera_position, -camera_position);
 
         encoder
             .encode(&frame, position)
@@ -29,12 +39,18 @@ fn main() {
     encoder.finish().expect("failed to finish encoder");
 }
 
-fn gradient(_frame_idx: f32) -> Array3<u8> {
-    let mut frame = Array3::from_shape_fn((720, 1280, 3), |(_y, _x, _c)| 0u8);
-    for x in 0..1280 {
-        for y in 0..720 {
-            frame[[y, x, 0]] = (x as f32 / 1280.0 * 255.0) as u8;
-            frame[[y, x, 1]] = (y as f32 / 1280.0 * 255.0) as u8;
+fn generate_frame(camera_position: Vec3, camera_direction: Vec3) -> Array3<u8> {
+    let mut buffer = Buffer::new(Dimensions(lib::WIDTH, lib::HEIGHT), lib::CHANNELS);
+    let mut frame = Array3::zeros((lib::HEIGHT as usize, lib::WIDTH as usize, 3));
+
+    lib::draw(&mut buffer, camera_position, camera_direction);
+    for x in 0..lib::WIDTH {
+        for y in 0..lib::HEIGHT {
+            let rgb = buffer.get(&Point(x, y)).as_bites();
+            let (x, y) = (x as usize, y as usize);
+            frame[[y, x, 0]] = rgb.0;
+            frame[[y, x, 1]] = rgb.1;
+            frame[[y, x, 2]] = rgb.2;
         }
     }
     frame

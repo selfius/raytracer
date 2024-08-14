@@ -2,7 +2,7 @@ pub mod buffer;
 mod common;
 mod ray_tracing;
 mod scene;
-mod vector_math;
+pub mod vector_math;
 
 use common::DEBUG_PINK;
 use ray_tracing::Intersection;
@@ -23,9 +23,7 @@ pub const THREADS: usize = 16;
 
 const HORIZONTAL_FOV: f32 = 90.0;
 
-pub fn draw(buffer: &mut Buffer) {
-    let camera_position = Vec3::new(0.0, 1.0, 0.0);
-    let looking_direction = Vec3::new(0.0, 0.0, -1.0);
+pub fn draw(buffer: &mut Buffer, camera_position: Vec3, looking_direction: Vec3) {
     let (in_world_top_left, in_world_pixel_x_offset, in_world_pixel_y_offset) =
         set_up_3d_world(camera_position, looking_direction);
 
