@@ -15,17 +15,16 @@ fn get_texture_coords(origin: &Vec3, point_on_sphere: &Vec3) -> (f32, f32) {
     let origin_to_point = (*point_on_sphere - *origin).normalize();
     const X: Vec3 = Vec3::new(1.0, 0.0, 0.0);
     const Z: Vec3 = Vec3::new(0.0, 0.0, 1.0);
-    let x = origin_to_point * X;
-    let z = origin_to_point * Z;
+    let (x, _, z) = origin_to_point.as_coords();
     let x = if x == 0.0 && z == 0.0 {
         0.0
     } else {
         let xz = Vec3::new(x, 0.0, z).normalize();
-        let mut x = ((xz * X + 1.0) - f32::EPSILON) / 4.0; //mapping to 0..0.5 from 1..-1
+        let mut x_angle = f32::acos(xz * X).to_degrees();
         if xz * Z < 0.0 {
-            x = 1.0 - x;
+            x_angle = 360.0 - x_angle;
         }
-        x
+        x_angle / 360.0
     };
 
     const UP: Vec3 = Vec3::new(0.0, 1.0, 0.0);
@@ -137,8 +136,15 @@ mod test {
     }
 
     #[test]
+    fn texture_coord_even_gradient() {
+        let (x, y) = get_texture_coords(&ORIGIN, &Vec3::new(0.7, 0.0, 0.7));
+
+        assert_eq!((0.1, 0.5), (cap_float(x), cap_float(y)));
+    }
+
+    #[test]
     fn texture_coord_bottom_right() {
-        let point_on_sphere = Vec3::new(-0.1, -1.0, -0.001).normalize();
+        let point_on_sphere = Vec3::new(0.1, -1.0, -0.001).normalize();
         let (x, y) = get_texture_coords(&ORIGIN, &point_on_sphere);
 
         assert_eq!((1.0, 1.0), (cap_float(x), cap_float(y)));
