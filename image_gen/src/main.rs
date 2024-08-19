@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     buffer.clear();
     lib::draw(
         &mut buffer,
-        Vec3::new(0.0, 1.0, 0.0),
+        Vec3::new(0.0, 1.2, 2.0),
         Vec3::new(0.0, 0.0, -1.0),
     );
 

@@ -16,8 +16,8 @@ use scene::{Object, Scene, Surface};
 use crate::buffer::{Buffer, Point, Rgb};
 use crate::vector_math::Vec3;
 
-pub const WIDTH: u32 = 1024;
-pub const HEIGHT: u32 = 768;
+pub const WIDTH: u32 = 1920;
+pub const HEIGHT: u32 = 1024;
 pub const CHANNELS: u8 = 3;
 pub const THREADS: usize = 16;
 

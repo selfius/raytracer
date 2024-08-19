@@ -19,11 +19,11 @@ fn main() {
     let mut position = Time::zero();
     let look_at = Vec3::new(0.0, 1.0, -7.5);
     let mut angle = 90.0_f32;
-    for _i in 0..180 {
-        angle += 2.0;
+    for _i in 0..720 {
+        angle += 0.5;
         let (x, z) = (
-            f32::cos(angle.to_radians()) * 8.0,
-            f32::sin(angle.to_radians()) * 8.0,
+            f32::cos(angle.to_radians()) * 12.0,
+            f32::sin(angle.to_radians()) * 12.0,
         );
         let camera_position = Vec3::new(x, 1.0, z);
         let frame = generate_frame(look_at + camera_position, -camera_position);
